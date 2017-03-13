@@ -1,0 +1,144 @@
+package com.slt.poker.task;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
+import com.slt.poker.service.PlayerKPIService;
+import com.slt.poker.service.HandCardService;
+import com.slt.poker.service.KpiService;
+import com.slt.poker.service.PokerPatternsScaleService;
+import com.slt.poker.service.RankingService;
+
+@Component
+public class CalcKpiTask {
+	private static final Logger log = LoggerFactory.getLogger(CalcKpiTask.class);
+	@Autowired
+	private RankingService rankingService;
+	@Autowired
+	private HandCardService handCardService;
+	@Autowired
+	private KpiService kpiService;
+	@Autowired
+	private PlayerKPIService playerKPIService;
+	@Autowired
+	private PokerPatternsScaleService pokerPatternsScaleService;
+	
+	/**
+	 * 计算指标
+	 */
+//	@Scheduled(cron = "${calcKpi}")
+	@Scheduled(fixedRate = 50 * 1000)
+	public void calcKpi() {
+		//计算盈利排行榜
+		long beginTime = System.currentTimeMillis();
+		log.info("==calculate kpi executing==");
+		log.info("==beginTime:{}",beginTime);
+		try {
+//				this.rankingService.saveCalcWeek();
+//				this.rankingService.saveCalcMonth();
+		} catch (Exception e) {
+			log.error("**calcProfitRanking error**");
+		}
+		
+		//计算起手牌盈利统计
+		try {
+
+//			 this.handCardService.saveHandCardProfit();
+//			 this.handCardService.saveHandCardPostion();
+//			 this.rankingService.saveCalcWeek();
+//			 this.rankingService.saveCalcMonth();
+			// this.playerKPIService.saveSevenDayProfit();
+			// this.playerKPIService.savePlayerKPIMonth();
+			// this.playerKPIService.saveMilitaryExploits();
+			//this.playerKPIService.savePlayerHavaShowdownWinRate();
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.error("**calcHandCardProfit error**");
+		}
+		//计算对局入池率及下注率
+		try {
+//			this.kpiService.saveBetKpi();
+//			this.kpiService.saveTotalRaiseKpi();
+//			this.kpiService.saveRaiseKpi();
+//			this.kpiService.saveTotalColdCallKpi();
+//			this.kpiService.saveColdCallKpi();
+//			this.kpiService.saveTotalSneakInKpi();
+//			this.kpiService.saveSneakInKpi();
+//			this.kpiService.saveTotalBetThreeKpi();
+//			this.kpiService.saveBetThreeKpi();
+//			this.kpiService.saveTotalCallBetThreeKpi();
+//			this.kpiService.saveCallBetThreeKpi();
+//			this.kpiService.saveTotalReRaiseBetThreeKpi();
+//			this.kpiService.saveReRaiseBetThreeKpi();
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.error("**calcPlayerKpi error**");
+		}	
+		//计算各AA牌型相对位置比例及次数
+		try {
+//			this.pokerPatternsScaleService.saveCallOrRaiseBetThree_PatternAA();
+//			this.pokerPatternsScaleService.saveRaiseBetThree_Mp_PatternAA();
+//			this.pokerPatternsScaleService.saveCallBetThree_Mp_PatternAA();
+//			this.pokerPatternsScaleService.saveRaiseBetThree_Ep_PatternAA();
+//			this.pokerPatternsScaleService.saveCallBetThree_Ep_PatternAA();
+//			this.pokerPatternsScaleService.saveRaiseBetFour_Ep_PatternAA();
+//			this.pokerPatternsScaleService.saveCallBetFour_Ep_PatternAA();
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.error("**calcPatternAA error**");
+		}
+		
+		//计算各AA,KK,QQ,AK牌型相对位置比例及次数
+		try {
+//			this.pokerPatternsScaleService.saveCallOrRaiseBetThree_PatternStrong();
+//			this.pokerPatternsScaleService.saveRaiseBetThree_Mp_PatternStrong();
+//			this.pokerPatternsScaleService.saveCallBetThree_Mp_PatternStrong();
+//			this.pokerPatternsScaleService.saveRaiseBetThree_Ep_PatternStrong();
+//			this.pokerPatternsScaleService.saveCallBetThree_Ep_PatternStrong();
+//			this.pokerPatternsScaleService.saveRaiseBetFour_Ep_PatternStrong();
+//			this.pokerPatternsScaleService.saveCallBetFour_Ep_PatternStrong();
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.error("**calcPatternStrong error**");
+		}
+		//计算各口袋(对子)牌型牌型相对位置比例及次数
+		try {
+//			this.pokerPatternsScaleService.saveCallOrRaiseBetThree_PatternPoket();
+//			this.pokerPatternsScaleService.saveRaiseBetThree_Mp_PatternPoket();
+//			this.pokerPatternsScaleService.saveCallBetThree_Mp_PatternPoket();
+//			this.pokerPatternsScaleService.saveRaiseBetThree_Ep_PatternPoket();
+//			this.pokerPatternsScaleService.saveCallBetThree_Ep_PatternPoket();
+//			this.pokerPatternsScaleService.saveRaiseBetFour_Ep_PatternPoket();
+//			this.pokerPatternsScaleService.saveCallBetFour_Ep_PatternPoket();
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.error("**calcPatternPoket error**");
+		}
+		//计算其他牌型牌型相对位置比例及次数
+		try {
+//			this.pokerPatternsScaleService.saveCallOrRaiseBetThree_PatternOther();
+//			this.pokerPatternsScaleService.saveRaiseBetThree_Mp_PatternOther();
+//			this.pokerPatternsScaleService.saveCallBetThree_Mp_PatternOther();
+//			this.pokerPatternsScaleService.saveRaiseBetThree_Ep_PatternOther();
+//			this.pokerPatternsScaleService.saveCallBetThree_Ep_PatternOther();
+//			this.pokerPatternsScaleService.saveRaiseBetFour_Ep_PatternOther();
+//			this.pokerPatternsScaleService.saveCallBetFour_Ep_PatternOther();
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.error("**calcPatternOther error**");
+		}
+		//位置技术
+		try {
+			this.pokerPatternsScaleService.savePostionSkill();
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.error("**calcPostionSkill error**");
+		}
+		long endTime = System.currentTimeMillis();
+		log.info("==calculate kpi execut success==spend:{}(ms)", (endTime - beginTime));
+	}
+}

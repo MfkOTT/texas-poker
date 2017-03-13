@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.slt.poker.dao.VipRecordMapper" >
+  <resultMap id="BaseResultMap" type="com.slt.poker.dto.VipRecord" >
+    <id column="RecordID" property="recordID" jdbcType="VARCHAR" />
+    <result column="LoginID" property="loginID" jdbcType="VARCHAR" />
+    <result column="ClubID" property="clubID" jdbcType="VARCHAR" />
+    <result column="VipLevel" property="vipLevel" jdbcType="INTEGER" />
+    <result column="Expenses" property="expenses" jdbcType="VARCHAR" />
+    <result column="EffectiveDate" property="effectiveDate" jdbcType="VARCHAR" />
+    <result column="ExpireDate" property="expireDate" jdbcType="VARCHAR" />
+    <result column="CreateDT" property="createDT" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    RecordID, LoginID, ClubID, VipLevel, Expenses, EffectiveDate, ExpireDate, CreateDT
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from slt_vip_record
+    where RecordID = #{recordID,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from slt_vip_record
+    where RecordID = #{recordID,jdbcType=VARCHAR}
+  </delete>
+  <insert id="insert" parameterType="com.slt.poker.dto.VipRecord" >
+    insert into slt_vip_record (RecordID, LoginID, ClubID, 
+      VipLevel, Expenses, EffectiveDate, 
+      ExpireDate, CreateDT)
+    values (#{recordID,jdbcType=VARCHAR}, #{loginID,jdbcType=VARCHAR}, #{clubID,jdbcType=VARCHAR}, 
+      #{vipLevel,jdbcType=INTEGER}, #{expenses,jdbcType=VARCHAR}, #{effectiveDate,jdbcType=VARCHAR}, 
+      #{expireDate,jdbcType=VARCHAR}, #{createDT,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.slt.poker.dto.VipRecord" >
+    insert into slt_vip_record
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="recordID != null" >
+        RecordID,
+      </if>
+      <if test="loginID != null" >
+        LoginID,
+      </if>
+      <if test="clubID != null" >
+        ClubID,
+      </if>
+      <if test="vipLevel != null" >
+        VipLevel,
+      </if>
+      <if test="expenses != null" >
+        Expenses,
+      </if>
+      <if test="effectiveDate != null" >
+        EffectiveDate,
+      </if>
+      <if test="expireDate != null" >
+        ExpireDate,
+      </if>
+      <if test="createDT != null" >
+        CreateDT,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="recordID != null" >
+        #{recordID,jdbcType=VARCHAR},
+      </if>
+      <if test="loginID != null" >
+        #{loginID,jdbcType=VARCHAR},
+      </if>
+      <if test="clubID != null" >
+        #{clubID,jdbcType=VARCHAR},
+      </if>
+      <if test="vipLevel != null" >
+        #{vipLevel,jdbcType=INTEGER},
+      </if>
+      <if test="expenses != null" >
+        #{expenses,jdbcType=VARCHAR},
+      </if>
+      <if test="effectiveDate != null" >
+        #{effectiveDate,jdbcType=VARCHAR},
+      </if>
+      <if test="expireDate != null" >
+        #{expireDate,jdbcType=VARCHAR},
+      </if>
+      <if test="createDT != null" >
+        #{createDT,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.slt.poker.dto.VipRecord" >
+    update slt_vip_record
+    <set >
+      <if test="loginID != null" >
+        LoginID = #{loginID,jdbcType=VARCHAR},
+      </if>
+      <if test="clubID != null" >
+        ClubID = #{clubID,jdbcType=VARCHAR},
+      </if>
+      <if test="vipLevel != null" >
+        VipLevel = #{vipLevel,jdbcType=INTEGER},
+      </if>
+      <if test="expenses != null" >
+        Expenses = #{expenses,jdbcType=VARCHAR},
+      </if>
+      <if test="effectiveDate != null" >
+        EffectiveDate = #{effectiveDate,jdbcType=VARCHAR},
+      </if>
+      <if test="expireDate != null" >
+        ExpireDate = #{expireDate,jdbcType=VARCHAR},
+      </if>
+      <if test="createDT != null" >
+        CreateDT = #{createDT,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where RecordID = #{recordID,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.slt.poker.dto.VipRecord" >
+    update slt_vip_record
+    set LoginID = #{loginID,jdbcType=VARCHAR},
+      ClubID = #{clubID,jdbcType=VARCHAR},
+      VipLevel = #{vipLevel,jdbcType=INTEGER},
+      Expenses = #{expenses,jdbcType=VARCHAR},
+      EffectiveDate = #{effectiveDate,jdbcType=VARCHAR},
+      ExpireDate = #{expireDate,jdbcType=VARCHAR},
+      CreateDT = #{createDT,jdbcType=VARCHAR}
+    where RecordID = #{recordID,jdbcType=VARCHAR}
+  </update>
+</mapper>

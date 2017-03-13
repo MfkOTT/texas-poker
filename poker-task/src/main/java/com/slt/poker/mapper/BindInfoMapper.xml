@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.slt.poker.dao.BindInfoMapper" >
+  <resultMap id="BaseResultMap" type="com.slt.poker.dto.BindInfo" >
+    <id column="BlindType" property="blindType" jdbcType="INTEGER" />
+    <result column="SBind" property="SBind" jdbcType="VARCHAR" />
+    <result column="BBind" property="BBind" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    BlindType, SBind, BBind
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select 
+    <include refid="Base_Column_List" />
+    from slt_bindinfo
+    where BlindType = #{blindType,jdbcType=INTEGER}
+  </select>
+  <select id="findBlindLowerBlindTypeList" resultMap="BaseResultMap">
+    select 
+    b.BlindType,b.SBind,b.BBind
+    from slt_club_blind a,slt_bindinfo b
+    where a.ClubID = #{clubID,jdbcType=VARCHAR}
+    and a.BlindType=b.BlindType
+    and <![CDATA[b.BlindType<=#{blindType,jdbcType=INTEGER}]]>
+  </select>
+
+</mapper>

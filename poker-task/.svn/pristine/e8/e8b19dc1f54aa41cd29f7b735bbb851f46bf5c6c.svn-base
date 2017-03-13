@@ -1,0 +1,49 @@
+package com.slt.poker.dao;
+
+import java.util.HashMap;
+import java.util.List;
+
+import org.apache.ibatis.annotations.Param;
+
+import com.slt.poker.dto.PlayerKpi;
+
+
+public interface PlayerKpiMapper extends DaoMapper{
+	List<HashMap<String,Object>> findPlayerKpiList(@Param("clubID")String clubId, @Param("blindType")int blindType,
+			@Param("playerID")String playerId);
+	/** 根据指标编号，在牌手指标表(SLT_PLAYER_KPI)中删除对应记录 **/
+	void deletePlayerKpiById(@Param("statisticStage")String statisticStage);
+	/**1001-1002保存7天和30的盈利**/
+	void saveSevenDayProfit (List<PlayerKpi> PlayerKpiList);
+	
+	/***1003战绩统计每个用户在每个俱乐部每个盲注级别下的战绩格式为 (总盈利/总手数/大盲)*100 **/
+	List<PlayerKpi> findPlayerMilitaryExploits(@Param("gameStage") String gameStage);
+	
+	/***1004翻牌前主动下注到池里的次数/总游戏次数(大盲位的check和被动收pot不考虑) **/
+	List<PlayerKpi> findPlayerInitiativePool(@Param("gameStage") String gameStage);
+	
+	/***1005 收pot次数/(主动入池次数+被动入池次数+被动收pot次数)四舍五入保留两位小数**/
+	List<PlayerKpi> findPlayerWinRate(@Param("gameStage") String gameStage);
+	
+	/***1006 摊牌次数/入池次数**/
+	List<PlayerKpi> findPlayerHavaShowdown(@Param("gameStage") String gameStage);
+	
+	/***1007 (摊牌盈利-摊牌亏损)/大盲**/
+	List<PlayerKpi> findPlayerHavaShowdownWinRate(@Param("gameStage") String gameStage);
+	
+	/**3001 flop胜率 在flop上收pot次数/见到flop的次数**/
+	List<PlayerKpi> findFlopPlayerWinRate(@Param("gameStage") String gameStage);
+	
+	/**3002 总Cbet率 在preflop中最后一个加注的在flop上第一下注的次数/最后一个在preflop上加注的次数**/
+	List<PlayerKpi> findFlopPlayerCbetRate(@Param("gameStage") String gameStage);
+	
+	/**3003 有位置的CBet率 在最后位的cbet次数/总cbet次数**/
+	List<PlayerKpi> findFlopPlayerPositionCbetRate(@Param("gameStage") String gameStage);
+	
+	/**3004 无位置的CBet 在最前位的cbet次数/总cbet次数**/
+	List<PlayerKpi> findFlopPlayerNoPositionCbetRate(@Param("gameStage") String gameStage);
+	
+	
+	
+	
+}

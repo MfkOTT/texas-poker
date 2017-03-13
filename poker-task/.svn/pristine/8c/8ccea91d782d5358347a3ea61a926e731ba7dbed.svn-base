@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.slt.poker.dao.UserPlayerMapper" >
+  <resultMap id="BaseResultMap" type="com.slt.poker.dto.UserPlayer" >
+    <id column="LoginID" property="loginID" jdbcType="VARCHAR" />
+    <id column="PlayerID" property="playerID" jdbcType="VARCHAR" />
+    <result column="CreateDT" property="createDT" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    LoginID, PlayerID, CreateDT
+  </sql>
+  <select id="findUserPlayer" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from slt_user_player
+    where LoginID = #{loginID,jdbcType=VARCHAR}
+  </select>
+  <select id="findUserPlayerByKey" resultMap="BaseResultMap" parameterType="com.slt.poker.dto.UserPlayerKey" >
+    select 
+    <include refid="Base_Column_List" />
+    from slt_user_player
+    where LoginID = #{loginID,jdbcType=VARCHAR}
+    and PlayerID = #{playerID,jdbcType=VARCHAR}
+  </select>
+</mapper>

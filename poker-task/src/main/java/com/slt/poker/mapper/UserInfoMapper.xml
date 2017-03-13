@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.slt.poker.dao.UserInfoMapper" >
+  <resultMap id="BaseResultMap" type="com.slt.poker.dto.UserInfo" >
+    <id column="LoginID" property="loginID" jdbcType="VARCHAR" />
+    <result column="UserName" property="userName" jdbcType="VARCHAR" />
+    <result column="UserSex" property="userSex" jdbcType="VARCHAR" />
+    <result column="HeadImage" property="headImage" jdbcType="VARCHAR" />
+    <result column="PassWord" property="passWord" jdbcType="VARCHAR" />
+    <result column="Activity" property="activity" jdbcType="VARCHAR" />
+    <result column="ProtectDate" property="protectDate" jdbcType="VARCHAR" />
+    <result column="CreateDT" property="createDT" jdbcType="VARCHAR" />
+    <result column="UpdateDT" property="updateDT" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    LoginID, UserName, UserSex, HeadImage, PassWord, Activity, ProtectDate, CreateDT, 
+    UpdateDT
+  </sql>
+  <select id="findUser" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from slt_userinfo
+    where LoginID = #{loginID,jdbcType=VARCHAR}
+    and PassWord = #{passWord,jdbcType=VARCHAR}
+    and Activity = '0'
+  </select>
+  <select id="findUserByLoginId" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from slt_userinfo
+    where LoginID = #{loginID,jdbcType=VARCHAR}
+    and Activity = '0'
+  </select>
+  <update id="updatePwd" parameterType="com.slt.poker.dto.UserInfo" >
+    update slt_userinfo
+    set PassWord = #{passWord,jdbcType=VARCHAR},
+      UpdateDT = #{updateDT,jdbcType=VARCHAR}
+    where LoginID = #{loginID,jdbcType=VARCHAR}
+  </update>
+   <!-- 获取用户别名 如果排行榜中的用户为非自己的Vip绑定账号且数据保护未过期(用户表与关联牌手表)，将用户昵称替换为”VIP” -->
+   <select id="findAlias" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select b.LoginID,
+    <![CDATA[if(a.LoginID <> #{loginID,jdbcType=VARCHAR} 
+    and TO_DAYS(b.ProtectDate) > TO_DAYS(#{dateStr,jdbcType=VARCHAR}) , 'VIP' , b.UserName)]]> as UserName
+    from slt_user_player a,slt_userinfo b
+    where a.LoginID=b.LoginID
+    and a.PlayerID = #{playerID,jdbcType=VARCHAR}
+  </select>
+   <select id="findUserByPartyId" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    a.LoginID,a.ProtectDate
+    from slt_userinfo a,slt_user_player b
+    where a.LoginID=b.LoginID
+    and b.PlayerID=#{playerID,jdbcType=VARCHAR}
+  </select>
+  
+</mapper>

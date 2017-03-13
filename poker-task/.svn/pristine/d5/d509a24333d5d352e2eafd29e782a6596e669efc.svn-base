@@ -1,0 +1,486 @@
+package com.slt.poker.service;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.slt.poker.dao.BindInfoMapper;
+import com.slt.poker.dao.PlayerKpiMapper;
+import com.slt.poker.dao.ProfitListMapper;
+import com.slt.poker.dto.PlayerKpi;
+import com.slt.poker.util.CalcUtil;
+import com.slt.poker.util.NonceUtil;
+/**
+ * flop阶段指标
+ */
+@Service
+public class FlopPlayerKPIService {
+
+	@Autowired
+	private PlayerKpiMapper playerKpiMapper;
+	@Autowired
+	private ProfitListMapper profitListMapper;
+	@Autowired
+	private BindInfoMapper bindInfoMapper;
+	
+	/**
+	 * 3001
+	 * flop胜率
+	 * 在flop上收pot次数/见到flop的次数
+     * 见flop次数未计算在preflop推allin的
+	 * @throws Exception
+	 */
+	public void saveFlopPlayerWinRate() throws Exception{
+		final String statisticStage = "3001";
+		final String gameStage = "preflop";
+		Date currentTime = new Date();
+		SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+		String dateString = formatter.format(currentTime);
+		List<PlayerKpi> playerKpitList = this.playerKpiMapper.findFlopPlayerWinRate(gameStage);
+		
+		PlayerKpi dataItem; // 数据库中查询到的每条记录
+		Map<String, List<PlayerKpi>> resultMap= new HashMap<String, List<PlayerKpi>>(); // 最终要的结果
+		Map<String,Map<String,String>> countMap = new HashMap<String,Map<String,String>>();//统计俱乐部概率
+		for(int i=0;i<playerKpitList.size();i++){
+		    dataItem = playerKpitList.get(i);
+		    String str = dataItem.getClubID()+"_"+dataItem.getBlindType();
+		    if(resultMap.containsKey(str)){
+		        resultMap.get(str).add(dataItem);
+		    }else{
+		        List<PlayerKpi> list = new ArrayList<PlayerKpi>();
+		        list.add(dataItem);
+		        resultMap.put(str,list);
+		    }
+		  //统计相同俱乐部同类型的值
+	        if(countMap.containsKey(str)){
+	        	countMap.get(str).put("sumWinCount",CalcUtil.getNumInfo(countMap.get(str).get("sumWinCount"),dataItem.getWinCount()));
+	        	countMap.get(str).put("sumFlopCount",CalcUtil.getNumInfo(countMap.get(str).get("sumFlopCount"),dataItem.getFoldCount()));
+	        }else{
+	        	Map<String,String> map = new HashMap<String,String>();
+	        	map.put("sumWinCount", dataItem.getWinCount());
+	        	map.put("sumFlopCount", dataItem.getFoldCount());
+	        	countMap.put(str, map);
+	        }
+		}
+		
+		this.playerKpiMapper.deletePlayerKpiById(statisticStage);
+		//循环统一俱乐部和统一盲注类型入库
+		   Iterator it = countMap.entrySet().iterator();
+		   while (it.hasNext()) {
+			    Map.Entry entry = (Map.Entry) it.next();
+			    String key = (String)entry.getKey();
+			    Map<String,String> value = (Map<String,String>)entry.getValue();
+			    
+			    List<PlayerKpi> pList = resultMap.get(key);
+			    String divide = CalcUtil.getDivide(value.get("sumWinCount"), value.get("sumFlopCount"),2);
+			    
+				if(!pList.isEmpty()){
+					for (PlayerKpi playerKpi : pList) {
+						 playerKpi.setPlayerKpiID(NonceUtil.getUuid());
+						 playerKpi.setUpdateDT(dateString);
+						 playerKpi.setKpiValue(playerKpi.getWinRate());
+						 playerKpi.setClubKpiValue(divide);
+						 playerKpi.setKpiCode(statisticStage);
+					}
+					this.playerKpiMapper.saveSevenDayProfit(pList);
+				}
+				value.clear();
+		   }
+	}
+	
+	/**
+	 * 3002
+	 * 总Cbet率
+	 * 在preflop中最后一个加注的在flop上第一下注的次数/最后一个在preflop上加注的次数
+	 * @throws Exception
+	 */
+	public void saveFlopPlayerCbetRate() throws Exception{
+		final String statisticStage = "3002";
+		final String gameStage = "preflop";
+		Date currentTime = new Date();
+		SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+		String dateString = formatter.format(currentTime);
+		List<PlayerKpi> playerKpitList = this.playerKpiMapper.findFlopPlayerCbetRate(gameStage);
+		
+		PlayerKpi dataItem; // 数据库中查询到的每条记录
+		Map<String, List<PlayerKpi>> resultMap= new HashMap<String, List<PlayerKpi>>(); // 最终要的结果
+		Map<String,Map<String,String>> countMap = new HashMap<String,Map<String,String>>();//统计俱乐部概率
+		for(int i=0;i<playerKpitList.size();i++){
+		    dataItem = playerKpitList.get(i);
+		    String str = dataItem.getClubID()+"_"+dataItem.getBlindType();
+		    if(resultMap.containsKey(str)){
+		        resultMap.get(str).add(dataItem);
+		    }else{
+		        List<PlayerKpi> list = new ArrayList<PlayerKpi>();
+		        list.add(dataItem);
+		        resultMap.put(str,list);
+		    }
+		    
+		    //统计相同俱乐部同类型的值
+	        if(countMap.containsKey(str)){
+	        	countMap.get(str).put("sumWinCount",CalcUtil.getNumInfo(countMap.get(str).get("sumWinCount"),dataItem.getWinCount()));
+	        	countMap.get(str).put("sumFlopCount",CalcUtil.getNumInfo(countMap.get(str).get("sumFlopCount"),dataItem.getFoldCount()));
+	        }else{
+	        	Map<String,String> map = new HashMap<String,String>();
+	        	map.put("sumWinCount", dataItem.getWinCount());
+	        	map.put("sumFlopCount", dataItem.getFoldCount());
+	        	countMap.put(str, map);
+	        }
+		}
+		
+		this.playerKpiMapper.deletePlayerKpiById(statisticStage);
+		//循环统一俱乐部和统一盲注类型入库
+		   Iterator it = countMap.entrySet().iterator();
+		   while (it.hasNext()) {
+			    Map.Entry entry = (Map.Entry) it.next();
+			    String key = (String)entry.getKey();
+			    Map<String,String> value = (Map<String,String>)entry.getValue();
+			    
+			    List<PlayerKpi> pList = resultMap.get(key);
+			    String divide = CalcUtil.getDivide(value.get("sumWinCount"), value.get("sumFlopCount"),2);
+			    
+				if(!pList.isEmpty()){
+					for (PlayerKpi playerKpi : pList) {
+						 playerKpi.setPlayerKpiID(NonceUtil.getUuid());
+						 playerKpi.setUpdateDT(dateString);
+						 playerKpi.setClubKpiValue(divide);
+						 playerKpi.setKpiCode(statisticStage);
+					}
+					this.playerKpiMapper.saveSevenDayProfit(pList);
+				}
+				value.clear();
+		   }
+	}
+	
+	
+	/**
+	 * 3003
+	 * 有位置的CBet率
+	 * 在最后位的cbet次数/总cbet次数
+	 * @throws Exception
+	 */
+	public void saveFlopPlayerPositionCbetRate() throws Exception{
+		final String statisticStage = "3003";
+		final String gameStage = "preflop";
+		Date currentTime = new Date();
+		SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+		String dateString = formatter.format(currentTime);
+		List<PlayerKpi> playerKpitList = this.playerKpiMapper.findFlopPlayerPositionCbetRate(gameStage);
+		
+		PlayerKpi dataItem; // 数据库中查询到的每条记录
+		Map<String, List<PlayerKpi>> resultMap= new HashMap<String, List<PlayerKpi>>(); // 最终要的结果
+		Map<String,Map<String,String>> countMap = new HashMap<String,Map<String,String>>();//统计俱乐部概率
+		for(int i=0;i<playerKpitList.size();i++){
+		    dataItem = playerKpitList.get(i);
+		    String str = dataItem.getClubID()+"_"+dataItem.getBlindType();
+		    if(resultMap.containsKey(str)){
+		        resultMap.get(str).add(dataItem);
+		    }else{
+		        List<PlayerKpi> list = new ArrayList<PlayerKpi>();
+		        list.add(dataItem);
+		        resultMap.put(str,list);
+		    }
+		    
+		    //统计相同俱乐部同类型的值
+	        if(countMap.containsKey(str)){
+	        	countMap.get(str).put("sumWinCount",CalcUtil.getNumInfo(countMap.get(str).get("sumWinCount"),dataItem.getWinCount()));
+	        	countMap.get(str).put("sumFlopCount",CalcUtil.getNumInfo(countMap.get(str).get("sumFlopCount"),dataItem.getFoldCount()));
+	        }else{
+	        	Map<String,String> map = new HashMap<String,String>();
+	        	map.put("sumWinCount", dataItem.getWinCount());
+	        	map.put("sumFlopCount", dataItem.getFoldCount());
+	        	countMap.put(str, map);
+	        }
+		}
+		
+		this.playerKpiMapper.deletePlayerKpiById(statisticStage);
+		//循环统一俱乐部和统一盲注类型入库
+		   Iterator it = countMap.entrySet().iterator();
+		   while (it.hasNext()) {
+			    Map.Entry entry = (Map.Entry) it.next();
+			    String key = (String)entry.getKey();
+			    Map<String,String> value = (Map<String,String>)entry.getValue();
+			    
+			    List<PlayerKpi> pList = resultMap.get(key);
+			    String divide = CalcUtil.getDivide(value.get("sumWinCount"), value.get("sumFlopCount"),2);
+			    
+				if(!pList.isEmpty()){
+					for (PlayerKpi playerKpi : pList) {
+						 playerKpi.setPlayerKpiID(NonceUtil.getUuid());
+						 playerKpi.setUpdateDT(dateString);
+						 playerKpi.setClubKpiValue(divide);
+						 playerKpi.setKpiCode(statisticStage);
+					}
+					this.playerKpiMapper.saveSevenDayProfit(pList);
+				}
+				value.clear();
+		   }
+	}
+	
+	
+	/**
+	 * 3004
+	 * 无位置的CBet
+	 * 在最前位的cbet次数/总cbet次数
+	 * @throws Exception
+	 */
+	public void saveFlopPlayerNoPositionCbetRate() throws Exception{
+		final String statisticStage = "3004";
+		final String gameStage = "preflop";
+		Date currentTime = new Date();
+		SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+		String dateString = formatter.format(currentTime);
+		List<PlayerKpi> playerKpitList = this.playerKpiMapper.findFlopPlayerNoPositionCbetRate(gameStage);
+		
+		PlayerKpi dataItem; // 数据库中查询到的每条记录
+		Map<String, List<PlayerKpi>> resultMap= new HashMap<String, List<PlayerKpi>>(); // 最终要的结果
+		Map<String,Map<String,String>> countMap = new HashMap<String,Map<String,String>>();//统计俱乐部概率
+		for(int i=0;i<playerKpitList.size();i++){
+		    dataItem = playerKpitList.get(i);
+		    String str = dataItem.getClubID()+"_"+dataItem.getBlindType();
+		    if(resultMap.containsKey(str)){
+		        resultMap.get(str).add(dataItem);
+		    }else{
+		        List<PlayerKpi> list = new ArrayList<PlayerKpi>();
+		        list.add(dataItem);
+		        resultMap.put(str,list);
+		    }
+		    
+		    //统计相同俱乐部同类型的值
+	        if(countMap.containsKey(str)){
+	        	countMap.get(str).put("sumWinCount",CalcUtil.getNumInfo(countMap.get(str).get("sumWinCount"),dataItem.getWinCount()));
+	        	countMap.get(str).put("sumFlopCount",CalcUtil.getNumInfo(countMap.get(str).get("sumFlopCount"),dataItem.getFoldCount()));
+	        }else{
+	        	Map<String,String> map = new HashMap<String,String>();
+	        	map.put("sumWinCount", dataItem.getWinCount());
+	        	map.put("sumFlopCount", dataItem.getFoldCount());
+	        	countMap.put(str, map);
+	        }
+		}
+		
+		this.playerKpiMapper.deletePlayerKpiById(statisticStage);
+		//循环统一俱乐部和统一盲注类型入库
+		   Iterator it = countMap.entrySet().iterator();
+		   while (it.hasNext()) {
+			    Map.Entry entry = (Map.Entry) it.next();
+			    String key = (String)entry.getKey();
+			    Map<String,String> value = (Map<String,String>)entry.getValue();
+			    
+			    List<PlayerKpi> pList = resultMap.get(key);
+			    String divide = CalcUtil.getDivide(value.get("sumWinCount"), value.get("sumFlopCount"),2);
+			    
+				if(!pList.isEmpty()){
+					for (PlayerKpi playerKpi : pList) {
+						 playerKpi.setPlayerKpiID(NonceUtil.getUuid());
+						 playerKpi.setUpdateDT(dateString);
+						 playerKpi.setClubKpiValue(divide);
+						 playerKpi.setKpiCode(statisticStage);
+					}
+					this.playerKpiMapper.saveSevenDayProfit(pList);
+				}
+				value.clear();
+		   }
+	}
+	
+	/**
+	 * 3005
+	 * Cbet面对raise的跟注率
+	 * Cbet面对raise的跟注次数/Cbet面对raise的总次数
+	 * @throws Exception
+	 */
+	public void saveFlopPlayerCbetRaiseRate() throws Exception{
+		final String statisticStage = "3005";
+		final String gameStage = "preflop";
+		Date currentTime = new Date();
+		SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+		String dateString = formatter.format(currentTime);
+		List<PlayerKpi> playerKpitList = this.playerKpiMapper.findFlopPlayerCbetRaiseRate(gameStage);
+		
+		PlayerKpi dataItem; // 数据库中查询到的每条记录
+		Map<String, List<PlayerKpi>> resultMap= new HashMap<String, List<PlayerKpi>>(); // 最终要的结果
+		Map<String,Map<String,String>> countMap = new HashMap<String,Map<String,String>>();//统计俱乐部概率
+		for(int i=0;i<playerKpitList.size();i++){
+		    dataItem = playerKpitList.get(i);
+		    String str = dataItem.getClubID()+"_"+dataItem.getBlindType();
+		    if(resultMap.containsKey(str)){
+		        resultMap.get(str).add(dataItem);
+		    }else{
+		        List<PlayerKpi> list = new ArrayList<PlayerKpi>();
+		        list.add(dataItem);
+		        resultMap.put(str,list);
+		    }
+		    
+		    //统计相同俱乐部同类型的值
+	        if(countMap.containsKey(str)){
+	        	countMap.get(str).put("sumWinCount",CalcUtil.getNumInfo(countMap.get(str).get("sumWinCount"),dataItem.getWinCount()));
+	        	countMap.get(str).put("sumFlopCount",CalcUtil.getNumInfo(countMap.get(str).get("sumFlopCount"),dataItem.getPoolCount()));
+	        }else{
+	        	Map<String,String> map = new HashMap<String,String>();
+	        	map.put("sumWinCount", dataItem.getWinCount());
+	        	map.put("sumFlopCount", dataItem.getPoolCount());
+	        	countMap.put(str, map);
+	        }
+		}
+		
+		this.playerKpiMapper.deletePlayerKpiById(statisticStage);
+		//循环统一俱乐部和统一盲注类型入库
+		   Iterator it = countMap.entrySet().iterator();
+		   while (it.hasNext()) {
+			    Map.Entry entry = (Map.Entry) it.next();
+			    String key = (String)entry.getKey();
+			    Map<String,String> value = (Map<String,String>)entry.getValue();
+			    
+			    List<PlayerKpi> pList = resultMap.get(key);
+			    String divide = CalcUtil.getDivide(value.get("sumWinCount"), value.get("sumFlopCount"),2);
+			    
+				if(!pList.isEmpty()){
+					for (PlayerKpi playerKpi : pList) {
+						 playerKpi.setPlayerKpiID(NonceUtil.getUuid());
+						 playerKpi.setUpdateDT(dateString);
+						 playerKpi.setClubKpiValue(divide);
+						 playerKpi.setKpiCode(statisticStage);
+					}
+					this.playerKpiMapper.saveSevenDayProfit(pList);
+				}
+				value.clear();
+		   }
+	}
+	
+	
+	/**
+	 * 3006
+	 * Cbet面对raise的Reraise率
+	 * Cbet面对raise的加注次数/Cbet面对raise的总次数
+	 * @throws Exception
+	 */
+	public void saveFlopPlayerCbetReraiseRate() throws Exception{
+		final String statisticStage = "3006";
+		final String gameStage = "preflop";
+		Date currentTime = new Date();
+		SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+		String dateString = formatter.format(currentTime);
+		List<PlayerKpi> playerKpitList = this.playerKpiMapper.findFlopPlayerCbetReraiseRate(gameStage);
+		
+		PlayerKpi dataItem; // 数据库中查询到的每条记录
+		Map<String, List<PlayerKpi>> resultMap= new HashMap<String, List<PlayerKpi>>(); // 最终要的结果
+		Map<String,Map<String,String>> countMap = new HashMap<String,Map<String,String>>();//统计俱乐部概率
+		for(int i=0;i<playerKpitList.size();i++){
+		    dataItem = playerKpitList.get(i);
+		    String str = dataItem.getClubID()+"_"+dataItem.getBlindType();
+		    if(resultMap.containsKey(str)){
+		        resultMap.get(str).add(dataItem);
+		    }else{
+		        List<PlayerKpi> list = new ArrayList<PlayerKpi>();
+		        list.add(dataItem);
+		        resultMap.put(str,list);
+		    }
+		    
+		    //统计相同俱乐部同类型的值
+	        if(countMap.containsKey(str)){
+	        	countMap.get(str).put("sumWinCount",CalcUtil.getNumInfo(countMap.get(str).get("sumWinCount"),dataItem.getWinCount()));
+	        	countMap.get(str).put("sumFlopCount",CalcUtil.getNumInfo(countMap.get(str).get("sumFlopCount"),dataItem.getFoldCount()));
+	        }else{
+	        	Map<String,String> map = new HashMap<String,String>();
+	        	map.put("sumWinCount", dataItem.getWinCount());
+	        	map.put("sumFlopCount", dataItem.getFoldCount());
+	        	countMap.put(str, map);
+	        }
+		}
+		
+		this.playerKpiMapper.deletePlayerKpiById(statisticStage);
+		//循环统一俱乐部和统一盲注类型入库
+		   Iterator it = countMap.entrySet().iterator();
+		   while (it.hasNext()) {
+			    Map.Entry entry = (Map.Entry) it.next();
+			    String key = (String)entry.getKey();
+			    Map<String,String> value = (Map<String,String>)entry.getValue();
+			    
+			    List<PlayerKpi> pList = resultMap.get(key);
+			    String divide = CalcUtil.getDivide(value.get("sumWinCount"), value.get("sumFlopCount"),2);
+			    
+				if(!pList.isEmpty()){
+					for (PlayerKpi playerKpi : pList) {
+						 playerKpi.setPlayerKpiID(NonceUtil.getUuid());
+						 playerKpi.setUpdateDT(dateString);
+						 playerKpi.setClubKpiValue(divide);
+						 playerKpi.setKpiCode(statisticStage);
+					}
+					this.playerKpiMapper.saveSevenDayProfit(pList);
+				}
+				value.clear();
+		   }
+	}
+	
+	
+	/**
+	 * 3007
+	 * Cbet面对raise的弃牌率
+	 * Cbet面对raise的弃牌次数/Cbet面对raise的总次数
+	 * @throws Exception
+	 */
+	public void saveFlopCbetRaiseBackOutRate() throws Exception{
+		final String statisticStage = "3007";
+		final String gameStage = "preflop";
+		Date currentTime = new Date();
+		SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+		String dateString = formatter.format(currentTime);
+		List<PlayerKpi> playerKpitList = this.playerKpiMapper.findFlopCbetRaiseBackOutRate(gameStage);
+		
+		PlayerKpi dataItem; // 数据库中查询到的每条记录
+		Map<String, List<PlayerKpi>> resultMap= new HashMap<String, List<PlayerKpi>>(); // 最终要的结果
+		Map<String,Map<String,String>> countMap = new HashMap<String,Map<String,String>>();//统计俱乐部概率
+		for(int i=0;i<playerKpitList.size();i++){
+		    dataItem = playerKpitList.get(i);
+		    String str = dataItem.getClubID()+"_"+dataItem.getBlindType();
+		    if(resultMap.containsKey(str)){
+		        resultMap.get(str).add(dataItem);
+		    }else{
+		        List<PlayerKpi> list = new ArrayList<PlayerKpi>();
+		        list.add(dataItem);
+		        resultMap.put(str,list);
+		    }
+		    
+		    //统计相同俱乐部同类型的值
+	        if(countMap.containsKey(str)){
+	        	countMap.get(str).put("sumWinCount",CalcUtil.getNumInfo(countMap.get(str).get("sumWinCount"),dataItem.getWinCount()));
+	        	countMap.get(str).put("sumFlopCount",CalcUtil.getNumInfo(countMap.get(str).get("sumFlopCount"),dataItem.getFoldCount()));
+	        }else{
+	        	Map<String,String> map = new HashMap<String,String>();
+	        	map.put("sumWinCount", dataItem.getWinCount());
+	        	map.put("sumFlopCount", dataItem.getFoldCount());
+	        	countMap.put(str, map);
+	        }
+		}
+		
+		this.playerKpiMapper.deletePlayerKpiById(statisticStage);
+		//循环统一俱乐部和统一盲注类型入库
+		   Iterator it = countMap.entrySet().iterator();
+		   while (it.hasNext()) {
+			    Map.Entry entry = (Map.Entry) it.next();
+			    String key = (String)entry.getKey();
+			    Map<String,String> value = (Map<String,String>)entry.getValue();
+			    
+			    List<PlayerKpi> pList = resultMap.get(key);
+			    String divide = CalcUtil.getDivide(value.get("sumWinCount"), value.get("sumFlopCount"),2);
+			    
+				if(!pList.isEmpty()){
+					for (PlayerKpi playerKpi : pList) {
+						 playerKpi.setPlayerKpiID(NonceUtil.getUuid());
+						 playerKpi.setUpdateDT(dateString);
+						 playerKpi.setClubKpiValue(divide);
+						 playerKpi.setKpiCode(statisticStage);
+					}
+					this.playerKpiMapper.saveSevenDayProfit(pList);
+				}
+				value.clear();
+		   }
+	}
+	  
+}

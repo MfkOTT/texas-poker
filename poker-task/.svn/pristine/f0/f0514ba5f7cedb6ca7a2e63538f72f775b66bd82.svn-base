@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.slt.poker.dao.HandCardsProfitMapper" >
+  <resultMap id="BaseResultMap" type="com.slt.poker.dto.HandCardsProfit" >
+    <id column="ProfitID" property="profitID" jdbcType="VARCHAR" />
+    <result column="PlayerID" property="playerID" jdbcType="VARCHAR" />
+    <result column="ClubID" property="clubID" jdbcType="VARCHAR" />
+    <result column="BindType" property="bindType" jdbcType="INTEGER" />
+    <result column="HandCardCode" property="handCardCode" jdbcType="VARCHAR" />
+    <result column="GameCount" property="gameCount" jdbcType="INTEGER" />
+    <result column="ProfitCount" property="profitCount" jdbcType="INTEGER" />
+    <result column="OnceMaxWin" property="onceMaxWin" jdbcType="VARCHAR" />
+    <result column="OnceMaxLose" property="onceMaxLose" jdbcType="VARCHAR" />
+    <result column="Profit" property="profit" jdbcType="VARCHAR" />
+    <result column="UpdateDT" property="updateDT" jdbcType="VARCHAR" />
+  </resultMap>
+  
+  <sql id="Base_Column_List" >
+    ProfitID, PlayerID, ClubID, BindType, HandCardCode, GameCount, ProfitCount, OnceMaxWin, 
+    OnceMaxLose, Profit, UpdateDT
+  </sql>
+	<select id="findCardsProfitList" resultMap="BaseResultMap">
+		select ClubID,BindType,PlayerID,HandCardCode,
+		sum(MatchResult*1) Profit,
+		count(MatchResult) GameCount,
+		<![CDATA[count(if(MatchResult*1>0,true,null)) ProfitCount,
+		if(max(MatchResult*1)>0,max(MatchResult*1),0) OnceMaxWin,
+		if(min(MatchResult*1)<0,min(MatchResult*1),0) OnceMaxLose]]>
+		from v_player_hand 
+		group by ClubID,BindType,PlayerID,HandCardCode
+	</select>
+	<delete id="deleteHandCardsProfit">
+    delete from slt_handcards_profit
+  	</delete>
+	 <insert id="insertCardsProfitList">
+		insert into slt_handcards_profit (ProfitID, PlayerID, ClubID, BindType, HandCardCode, GameCount, ProfitCount, OnceMaxWin, 
+    OnceMaxLose, Profit, UpdateDT)
+		values
+		<foreach collection="list" item="HandCardsProfit" index="index"
+			separator=",">
+			(#{HandCardsProfit.profitID,jdbcType=VARCHAR},
+			#{HandCardsProfit.playerID,jdbcType=VARCHAR},
+			#{HandCardsProfit.clubID,jdbcType=VARCHAR},
+			#{HandCardsProfit.bindType,jdbcType=INTEGER}, 
+			#{HandCardsProfit.handCardCode,jdbcType=VARCHAR},
+			#{HandCardsProfit.gameCount,jdbcType=INTEGER},
+			#{HandCardsProfit.profitCount,jdbcType=INTEGER},
+			#{HandCardsProfit.onceMaxWin,jdbcType=INTEGER},
+			#{HandCardsProfit.onceMaxLose,jdbcType=VARCHAR},
+			#{HandCardsProfit.profit,jdbcType=VARCHAR},
+			#{HandCardsProfit.updateDT,jdbcType=VARCHAR})
+		</foreach>
+	</insert>
+</mapper>

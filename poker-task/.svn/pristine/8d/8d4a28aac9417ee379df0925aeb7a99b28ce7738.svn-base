@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.slt.poker.dao.PlayerKpiMapper" >
+  <resultMap id="BaseResultMap" type="com.slt.poker.dto.PlayerKpi" >
+    <id column="PlayerKpiID" property="playerKpiID" jdbcType="VARCHAR" />
+    <result column="PlayerID" property="playerID" jdbcType="VARCHAR" />
+    <result column="ClubID" property="clubID" jdbcType="VARCHAR" />
+    <result column="BlindType" property="blindType" jdbcType="INTEGER" />
+    <result column="KpiCode" property="kpiCode" jdbcType="VARCHAR" />
+    <result column="KpiValue" property="kpiValue" jdbcType="VARCHAR" />
+    <result column="ClubKpiValue" property="clubKpiValue" jdbcType="VARCHAR" />
+    <result column="UpdateDT" property="updateDT" jdbcType="VARCHAR" />
+    <result column="PoolCount" property="poolCount" jdbcType="VARCHAR" />
+    <result column="GameCount" property="gameCount" jdbcType="VARCHAR" />
+    <result column="WinCount" property="winCount" jdbcType="VARCHAR" />
+    <result column="WinRate" property="winRate" jdbcType="VARCHAR" />
+    <result column="RiverCount" property="riverCount" jdbcType="VARCHAR" />
+    <result column="FoldCount" property="foldCount" jdbcType="VARCHAR" />
+    <result column="ShowdowRate" property="showdowRate" jdbcType="VARCHAR" />
+    <result column="Profit" property="profit" jdbcType="VARCHAR" />
+     <result column="Lose" property="lose" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    PlayerKpiID, PlayerID, ClubID, BlindType, KpiCode, KpiValue, ClubKpiValue, UpdateDT
+  </sql>
+  <!-- 查询各位置入池率 -->
+  <select id="findBetKpiList" resultMap="BaseResultMap" parameterType="java.lang.String">
+   	select a.PlayerID,a.ClubID,a.BindType as BlindType,a.PositionName,b.PoolCount,a.GameCount,format(b.PoolCount/a.GameCount,2) KpiValue 
+   	from (select  PlayerID,ClubID,BindType, PositionName,count(*) GameCount from v_game_player 
+	group by ClubID,BindType,PlayerID,PositionName) as a,
+	(select playerID,ClubID,BindType, PositionName,count(distinct(gameid)) PoolCount from v_game_action where GameStage = 'preflop'
+ 	and (GameAction='bet' or GameAction ='raise' or GameAction='call' or GameAction = 'allin')
+	group by ClubID,BindType,PlayerID,PositionName) as b
+	where a.BindType=b.BindType and a.PlayerID = b.PlayerID and a.ClubID = b.ClubID and a.PositionName = b.PositionName
+	and a.PositionName = #{position,jdbcType=VARCHAR}
+  </select>
+  <!-- 根据指标编号，在牌手指标表(SLT_PLAYER_KPI)中删除对应记录 -->
+   <delete id="deletePlayerKpiById" parameterType="java.lang.String" >
+    delete from slt_player_kpi
+    where BlindType = #{statisticStage,jdbcType=VARCHAR}
+  </delete>
+  
+  <insert id="saveSevenDayProfit" parameterType="java.util.List">
+		insert into slt_player_kpi (PlayerKpiID, PlayerID, ClubID, BlindType, KpiCode, KpiValue, ClubKpiValue, UpdateDT)
+		values
+		<foreach collection="list" item="PlayerKpi" index="index"
+			separator=",">
+			(#{PlayerKpi.playerKpiID,jdbcType=VARCHAR},
+			#{PlayerKpi.playerID,jdbcType=VARCHAR},
+			#{PlayerKpi.clubID,jdbcType=VARCHAR},
+			#{PlayerKpi.blindType,jdbcType=INTEGER}, 
+			#{PlayerKpi.kpiCode,jdbcType=INTEGER},
+			#{PlayerKpi.kpiValue,jdbcType=VARCHAR},
+			#{PlayerKpi.clubKpiValue,jdbcType=INTEGER},
+			#{PlayerKpi.updateDT,jdbcType=INTEGER})
+		</foreach>
+	</insert>
+	<!-- 1003 - 战绩 -->
+	<select id="findPlayerMilitaryExploits" parameterType="java.lang.String" resultMap="BaseResultMap" >
+	select a.PlayerID,a.ClubID,a.BindType as BlindType,b.PoolCount,a.GameCount,format(b.PoolCount/a.GameCount,2) as kpiValue from  (select  PlayerID,ClubID,BindType,count(*) GameCount from v_game_player 
+           group by ClubID,BindType,PlayerID) as a,
+           (select playerID,ClubID,BindType,count(distinct(gameId)) PoolCount from v_game_action where GameStage = #{gameStage,jdbcType=VARCHAR}
+           and (GameAction='bet' or GameAction ='raise' or GameAction='call' or GameAction = 'allin')
+           group by ClubID,BindType,PlayerID) as b
+           where a.BindType=b.BindType and a.PlayerID = b.PlayerID and a.ClubID = b.ClubID
+    </select>
+    <!-- 1004 - 主动入池率 -->
+	<select id="findPlayerInitiativePool" parameterType="java.lang.String" resultMap="BaseResultMap" >
+	select a.PlayerID,a.ClubID,a.BindType as BlindType,if(b.PoolCount is null,0,b.PoolCount) PoolCount,a.GameCount,format(if(b.PoolCount is null,0,b.PoolCount)/a.GameCount,2) kpiValue from  (select  PlayerID,ClubID,BindType,count(*) GameCount from v_game_player 
+           group by ClubID,BindType,PlayerID) as a left outer join
+           (select playerID,ClubID,BindType,count(distinct(gameId)) PoolCount from v_game_action where GameStage = 'preflop'
+           and (GameAction='bet' or GameAction ='raise' or GameAction='call' or GameAction = 'allin')
+           group by ClubID,BindType,PlayerID) as b
+           on a.BindType=b.BindType and a.PlayerID = b.PlayerID and a.ClubID = b.ClubID
+    </select>
+    
+     <!-- 1005 - 胜率 -->
+	<select id="findPlayerWinRate" parameterType="java.lang.String" resultMap="BaseResultMap" >
+    select a.clubID,a.BindType as BlindType,a.PlayerID,a.winCount,(a.poolCount+if(b.passiveCount is null,0,b.passiveCount))  poolCount,
+          format(a.winCount/(a.poolCount+if(b.passiveCount is null,0,b.passiveCount)),2) winRate from
+          (select ClubID,bindType,PlayerID,count(distinct(gameId)) poolCount,count(if(MatchResult*1>0,true,null)) winCount 
+          from v_game_action  where GameStage = 'preflop'and (ActionType='active' and GameAction!='fold') 
+          group by ClubID,bindType,PlayerID) a left outer join 
+          (select ClubID,BindType,PlayerID,count(1) as passiveCount from (select ClubID,bindType,GameID,PlayerID,GameIndex,count(*) actionCount 
+          from v_game_action  where PositionName = 'BB' group by ClubID,bindType,GameID,PlayerID order by GameIndex) as f where f.actionCount = 1
+          group by clubID,BindType,PlayerID) b on a.ClubID = b.ClubID and a.BindType = b.BindType and a.PlayerID = b.PlayerID
+    </select>
+      <!-- 1006 - 摊牌率 -->
+	<select id="findPlayerHavaShowdown" parameterType="java.lang.String" resultMap="BaseResultMap" >
+       select f.ClubID,f.bindType as BlindType,f.PlayerID,f.poolCount,if(g.riverCount is null,0,g.riverCount) riverCount,if(g.FoldCount is null,0,g.FoldCount) FoldCount,
+             format((if(g.riverCount is null,0,g.riverCount)-if(g.FoldCount is null,0,g.FoldCount))/f.poolCount,2) as showdowRate from
+             (select ClubID,bindType,PlayerID,count(distinct(gameId)) poolCount 
+             from v_game_action  
+             where GameStage = 'preflop'and (ActionType='active' and GameAction!='fold') 
+             group by ClubID,bindType,PlayerID) f left outer join(
+             select a.ClubID,a.BindType,a.PlayerID,a.riverCount,b.FoldCount  from
+             (select ClubID,BindType,PlayerID,count(1) riverCount from v_game_player where EndStage = 'river' and showdown='0'
+             group by ClubID,BindType,PlayerID) as a left outer join (select ClubID,BindType,PlayerID,count(distinct(gameID)) FoldCount from v_game_action where EndStage = 'river' and showdown='0' and GameAction = 'fold'
+             group by ClubID,BindType,PlayerID) as b on b.ClubID= a.ClubID and b.BindType = a.BindType and a.PlayerID = b.PlayerID) g on g.ClubID= f.ClubID and g.BindType = f.BindType and g.PlayerID = f.PlayerID
+    </select>
+      <!-- 1007 - 摊牌盈利 -->
+	<select id="findPlayerHavaShowdownWinRate" parameterType="java.lang.String" resultMap="BaseResultMap" >
+	select a.ClubID,a.BindType as BlindType,a.PlayerID,a.profit,if(b.lose is null,0,b.lose) lose,
+            format((a.profit - if(b.lose is null,0,b.lose))/(select BBind from slt_bindinfo where BlindType=a.BindType),1) showdowRate  from
+            (select ClubID,BindType,PlayerID,sum(MatchResult) profit from v_game_player where EndStage='river' and  showdown='0'
+             group by ClubID,BindType,PlayerID)as a left outer join 
+            (select ClubID,BindType,PlayerID,sum(MatchResult) lose from v_game_action where EndStage='river' and showdown='0' and GameAction = 'fold'
+            group by ClubID,BindType,PlayerID) as b on b.ClubID= a.ClubID and b.BindType = a.BindType and a.PlayerID = b.PlayerID
+    </select>
+    
+    <!-- 3001 - flop胜率 -->
+	<select id="findFlopPlayerWinRate" parameterType="java.lang.String" resultMap="BaseResultMap" >
+	select a.ClubID,a.BindType as BlindType,a.PlayerID,a.flopCount,if(b.winFlopCount is null,0,b.winFlopCount) winCount,format(if(b.winFlopCount is null,0,b.winFlopCount)/a.flopCount,2) as winRate from
+             (select ClubID,BindType,PlayerID, count(distinct(gameID)) flopCount from v_game_action where GameStage = 'flop' 
+             group by ClubID,BindType,PlayerID) as a left outer join
+             (select ClubID,BindType,PlayerID,count(1) winFlopCount from v_game_player where EndStage = 'flop' and MatchResult*1>0
+             group by ClubID,BindType,PlayerID) as b
+             on a.ClubID = b.ClubID and a.BindType = b.BindType and a.PlayerID = b.PlayerID
+    </select>
+    <!-- 3002 - 总Cbet率 -->
+    <select id="findFlopPlayerCbetRate" parameterType="java.lang.String" resultMap="BaseResultMap" >
+	select c.ClubID,c.BindType as BlindType,c.PlayerID,c.openCount as flopCount,if(d.cbetCount is null,0,d.cbetCount) winCount ,format(if(d.cbetCount is null,0,d.cbetCount)/c.openCount,2) kpiValue from 
+              (select ClubID,BindType,PlayerID,GameID,count(1) openCount from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+              and EndStage!='preflop' and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)
+              group by ClubID,BindType,PlayerID) as c left outer join
+              (select a.ClubID,a.BindType,a.PlayerID,count(1) cbetCount from
+              (select ClubID,BindType,PlayerID,GameID from v_game_action  where GameStage = 'flop' and GameAction = 'bet' ) as a,
+              (select ClubID,BindType,PlayerID,GameID from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+              and EndStage!='preflop' 
+              and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)) as b
+              where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID
+              group by a.ClubID,a.BindType,a.PlayerID) as d
+              on c.ClubID = d.ClubID and c.BindType = d.BindType and c.PlayerID = d.PlayerID
+    </select>
+    
+       <!-- 3003 - 总Cbet率 -->
+    <select id="findFlopPlayerPositionCbetRate" parameterType="java.lang.String" resultMap="BaseResultMap" >
+	  select c.ClubID,c.BindType as BlindType,c.PlayerID,c.cbetCount,if(d.mpcbetCount is null,0,d.mpcbetCount) as mpcbetCount,format(if(d.mpcbetCount is null,0,d.mpcbetCount)/c.cbetCount,2) kpiValue from
+      (select a.ClubID,a.BindType,a.PlayerID,count(1) cbetCount from
+           (select ClubID,BindType,PlayerID,GameID from v_game_action  where GameStage = 'flop' and GameAction = 'bet' ) as a,
+           (select ClubID,BindType,PlayerID,GameID from v_game_action h where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+           and EndStage!='preflop' and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = h.GameID)) as b
+           where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID
+           group by a.ClubID,a.BindType,a.PlayerID) as c left outer join 
+           (select e.ClubID,e.BindType,e.PlayerID,count(1) mpcbetCount from
+           (select ClubID,BindType,PlayerID,GameID,PlayerPosition from v_game_action  where GameStage = 'flop' and GameAction = 'bet' ) as e,
+           (select ClubID,BindType,PlayerID,GameID from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+           and EndStage!='preflop' and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)) as g
+           where e.ClubID=g.ClubID and e.BindType=g.BindType and e.PlayerID = g.playerID and e.GameID = g.GameID 
+           and e.PlayerPosition =(select max(playerPosition) from v_game_action where GameID = e.GameID and GameStage = 'flop')
+           group by e.ClubID,e.BindType,e.PlayerID) as d
+           on c.ClubID = d.ClubID and c.BindType =d.BindType and c.PlayerID = d.PlayerID
+    </select>
+    
+       <!-- 3004 - 无位置的CBet -->
+    <select id="findFlopPlayerNoPositionCbetRate" parameterType="java.lang.String" resultMap="BaseResultMap" >
+	  select c.ClubID,c.BindType as BlindType,c.PlayerID,c.cbetCount,if(d.mpcbetCount is null,0,d.mpcbetCount) as mpcbetCount,format(if(d.mpcbetCount is null,0,d.mpcbetCount)/c.cbetCount,2) kpiValue from
+      (select a.ClubID,a.BindType,a.PlayerID,count(1) cbetCount from
+           (select ClubID,BindType,PlayerID,GameID from v_game_action  where GameStage = 'flop' and GameAction = 'bet' ) as a,
+           (select ClubID,BindType,PlayerID,GameID from v_game_action h where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+           and EndStage!='preflop' and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = h.GameID)) as b
+           where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID
+           group by a.ClubID,a.BindType,a.PlayerID) as c left outer join 
+           (select e.ClubID,e.BindType,e.PlayerID,count(1) mpcbetCount from
+           (select ClubID,BindType,PlayerID,GameID,PlayerPosition from v_game_action  where GameStage = 'flop' and GameAction = 'bet' ) as e,
+           (select ClubID,BindType,PlayerID,GameID from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+           and EndStage!='preflop' and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)) as g
+           where e.ClubID=g.ClubID and e.BindType=g.BindType and e.PlayerID = g.playerID and e.GameID = g.GameID 
+           and e.PlayerPosition =(select max(playerPosition) from v_game_action where GameID = e.GameID and GameStage = 'flop')
+           group by e.ClubID,e.BindType,e.PlayerID) as d
+           on c.ClubID = d.ClubID and c.BindType =d.BindType and c.PlayerID = d.PlayerID
+    </select>
+    
+    
+  <!-- 查询合计加注入池率 -->
+   <select id="findTotalRaiseBetKpiList" resultMap="BaseResultMap">
+  	select a.PlayerID,a.ClubID,a.BindType as BlindType,b.PoolCount,a.GameCount,format(b.PoolCount/a.GameCount,2) KpiValue 
+  	from  (select  PlayerID,ClubID,BindType, count(*) GameCount from v_game_player 
+	group by ClubID,BindType,PlayerID) as a,
+	(select playerID,ClubID,BindType, count(distinct(gameid)) PoolCount from v_game_action where GameStage = 'preflop'
+ 	and (GameAction='bet' or GameAction ='raise' or GameAction = 'allin')
+	group by ClubID,BindType,PlayerID) as b
+	where a.BindType=b.BindType 
+	and a.PlayerID = b.PlayerID 
+	and a.ClubID = b.ClubID
+  </select>
+
+<!-- 查询各位置加注入池率 -->
+   <select id="findRaiseKpiList" resultMap="BaseResultMap">
+  	select a.PlayerID,a.ClubID,a.BindType as BlindType,a.PositionName,b.PoolCount,a.GameCount,format(b.PoolCount/a.GameCount,2) KpiValue 
+  	from (select  PlayerID,ClubID,BindType, PositionName,count(*) GameCount from v_game_player 
+	group by ClubID,BindType,PlayerID,PositionName) as a,
+	(select playerID,ClubID,BindType, PositionName,count(distinct(gameid)) PoolCount 
+	from v_game_action where GameStage = 'preflop'
+ 	and (GameAction='bet' or GameAction ='raise' or GameAction = 'allin')
+	group by ClubID,BindType,PlayerID,PositionName) as b
+	where a.BindType=b.BindType 
+	and a.PlayerID = b.PlayerID 
+	and a.ClubID = b.ClubID 
+	and a.PositionName = b.PositionName
+	and a.PositionName = #{position,jdbcType=VARCHAR}
+  </select>
+
+   <!-- 查询合计冷跟注入池率 -->
+   <select id="findTotalColdCallKpiList" resultMap="BaseResultMap">
+  	select a.PlayerID,a.ClubID,a.BindType as BlindType,b.PoolCount,a.GameCount,format(b.PoolCount/a.GameCount,2) KpiValue from  
+	(select  PlayerID,ClubID,BindType, count(*) GameCount from v_game_player 
+	group by ClubID,BindType,PlayerID) as a,
+	(select playerID,ClubID,BindType, PositionName,count(distinct(gameid)) PoolCount 
+	from v_game_action where GameStage = 'preflop'
+ 	and (GameAction='bet' or GameAction ='raise' or GameAction = 'allin' or GameAction = 'call') 
+ 	<![CDATA[and RasieCount>0 and ActionIndex<= PlayerCount+2]]>
+	group by ClubID,BindType,PlayerID) as b
+	where a.BindType=b.BindType and a.PlayerID = b.PlayerID and a.ClubID = b.ClubID
+  </select>
+
+     <!-- 查询各位置冷跟注入池率 -->
+   <select id="findColdCallKpiList" resultMap="BaseResultMap">
+  	select a.PlayerID,a.ClubID,a.BindType as BlindType,a.PositionName,b.PoolCount,a.GameCount,format(b.PoolCount/a.GameCount,2) KpiValue 
+  	from (select  PlayerID,ClubID,BindType, PositionName,count(*) GameCount from v_game_player 
+	group by ClubID,BindType,PlayerID,PositionName) as a,
+	(select playerID,ClubID,BindType, PositionName,count(distinct(gameid)) PoolCount from v_game_action where GameStage = 'preflop'
+ 	<![CDATA[and GameAction = 'call' and RasieCount>0 and ActionIndex<= PlayerCount+2]]>
+	group by ClubID,BindType,PlayerID,PositionName) as b
+	where a.BindType=b.BindType and a.PlayerID = b.PlayerID and a.ClubID = b.ClubID and a.PositionName = b.PositionName
+	and a.PositionName = #{position,jdbcType=VARCHAR}
+  </select>
+
+   <!-- 查询合计溜入池率 -->
+   <select id="findTotalSneakInKpiList" resultMap="BaseResultMap">
+  	select a.PlayerID,a.ClubID,a.BindType as BlindType,b.PoolCount,a.GameCount,format(b.PoolCount/a.GameCount,2) KpiValue 
+  	from (select  PlayerID,ClubID,BindType, count(*) GameCount from v_game_player 
+	group by ClubID,BindType,PlayerID) as a,
+	(select playerID,ClubID,BindType, count(distinct(gameid)) PoolCount from v_game_action where GameStage = 'preflop'
+ 	and (GameAction = 'call' or GameAction = 'check') 
+ 	and RasieCount=0 
+ 	<![CDATA[and ActionIndex<= PlayerCount+2]]>
+	group by ClubID,BindType,PlayerID) as b
+	where a.BindType=b.BindType and a.PlayerID = b.PlayerID and a.ClubID = b.ClubID
+  </select>
+     <!-- 查询各位置溜入池率 -->
+   <select id="findSneakInKpiList" resultMap="BaseResultMap">
+  	select a.PlayerID,a.ClubID,a.BindType as BlindType,a.PositionName,b.PoolCount,a.GameCount,format(b.PoolCount/a.GameCount,2) KpiValue 
+  	from (select PlayerID,ClubID,BindType, PositionName,count(*) GameCount from v_game_player 
+	group by ClubID,BindType,PlayerID,PositionName) as a,
+	(select playerID,ClubID,BindType, PositionName,count(distinct(gameid)) PoolCount from v_game_action where GameStage = 'preflop'
+ 	and GameAction = 'call' and RasieCount=0 
+ 	<![CDATA[and ActionIndex<= PlayerCount+2]]>
+	group by ClubID,BindType,PlayerID,PositionName) as b
+	where a.BindType=b.BindType and a.PlayerID = b.PlayerID and a.ClubID = b.ClubID and a.PositionName = b.PositionName
+	and a.PositionName = #{position,jdbcType=VARCHAR}
+  </select>
+  
+      <!-- 查询合计3Bet率 -->
+   <select id="findTotalBetThreeKpiList" resultMap="BaseResultMap">
+  	select a.PlayerID,a.ClubID,a.BindType as BlindType,b.betCount,a.PoolCount,format(b.betCount/a.PoolCount,2) KpiValue from  
+	(select playerID,ClubID,BindType,count(distinct(gameid)) PoolCount from v_game_action where GameStage = 'preflop'
+ 	and (GameAction='bet' or GameAction ='raise' or GameAction='call' or GameAction = 'allin')
+	group by ClubID,BindType,PlayerID) as a,
+	(select playerID,ClubID,BindType,count(distinct(gameid)) betCount from v_game_action where GameStage = 'preflop'
+ 	and (GameAction = 'rasie' or GameAction = 'allin') 
+ 	<![CDATA[and RasieCount>0]]>
+	group by ClubID,BindType,PlayerID) as b
+	where a.BindType=b.BindType and a.PlayerID = b.PlayerID and a.ClubID = b.ClubID
+  </select>
+  
+      <!-- 查询各位置3Bet率 -->
+   <select id="findBetThreeKpiList" resultMap="BaseResultMap">
+  	select a.PlayerID,a.ClubID,a.BindType as BlindType,a.PositionName,b.betCount,a.PoolCount,format(b.betCount/a.PoolCount,2) KpiValue 
+  	from  (select playerID,ClubID,BindType,PositionName,count(distinct(gameid)) PoolCount from v_game_action where GameStage = 'preflop'
+ 	and (GameAction='bet' or GameAction ='raise' or GameAction='call' or GameAction = 'allin')
+	group by ClubID,BindType,PlayerID,PositionName) as a,
+	(select playerID,ClubID,BindType,PositionName,count(distinct(gameid)) betCount from v_game_action where GameStage = 'preflop'
+ 	and  (GameAction = 'rasie' or GameAction = 'allin') 
+ 	<![CDATA[and RasieCount>0]]>
+	group by ClubID,BindType,PlayerID,PositionName) as b
+	where a.BindType=b.BindType and a.PlayerID = b.PlayerID and a.ClubID = b.ClubID
+	and a.PositionName = b.PositionName and a.PositionName = #{position,jdbcType=VARCHAR}
+  </select>
+  
+      <!-- 查询合计跟3Bet率 -->
+   <select id="findTotalCallBetThreeKpiList" resultMap="BaseResultMap">
+ 	select a.PlayerID,a.ClubID,a.BindType as BlindType,b.callbetCount,a.PoolCount,format(b.callbetCount/a.PoolCount,2) KpiValue from  
+	(select playerID,ClubID,BindType,count(distinct(gameid)) PoolCount from v_game_action where GameStage = 'preflop'
+ 	and (GameAction='bet' or GameAction ='raise' or GameAction='call' or GameAction = 'allin')
+	group by ClubID,BindType,PlayerID) as a,
+	(select playerID,ClubID,BindType,count(distinct(gameid)) callbetCount from v_game_action where GameStage = 'preflop'
+ 	and  GameAction = 'call' 
+ 	<![CDATA[and RasieCount>1]]>
+	group by ClubID,BindType,PlayerID) as b
+	where a.BindType=b.BindType and a.PlayerID = b.PlayerID and a.ClubID = b.ClubID
+  </select>
+  
+      <!-- 查询各位置跟3Bet率 -->
+   <select id="findCallBetThreeKpiList" resultMap="BaseResultMap">
+ 	select a.PlayerID,a.ClubID,a.BindType as BlindType,a.PositionName,b.callbetCount,a.PoolCount,format(b.callbetCount/a.PoolCount,2) KpiValue from  
+	(select playerID,ClubID,BindType,PositionName,count(distinct(gameid)) PoolCount from v_game_action where GameStage = 'preflop'
+ 	and (GameAction='bet' or GameAction ='raise' or GameAction='call' or GameAction = 'allin')
+	group by ClubID,BindType,PlayerID,PositionName) as a,
+	(select playerID,ClubID,BindType,PositionName,count(distinct(gameid)) callbetCount from v_game_action where GameStage = 'preflop'
+ 	and  GameAction = 'call'  
+ 	<![CDATA[and RasieCount>1]]>
+	group by ClubID,BindType,PlayerID,PositionName) as b
+	where a.BindType=b.BindType and a.PlayerID = b.PlayerID and a.ClubID = b.ClubID
+	and a.PositionName = b.PositionName and a.PositionName = #{position,jdbcType=VARCHAR}
+  </select>
+ 
+  <!-- 根据KpiCode删除数据 -->
+  <delete id="deleteKpiByKpiCode" parameterType="java.lang.String">
+    delete from slt_player_kpi where KpiCode = #{kpiCode,jdbcType=VARCHAR}
+  </delete>
+  <!-- 批量插入数据 -->
+  <insert id="insertKpiBatch">
+		insert into slt_player_kpi (PlayerKpiID, PlayerID, ClubID, BlindType, KpiCode, KpiValue, UpdateDT)
+		values
+		<foreach collection="list" item="PlayerKpi" index="index"
+			separator=",">
+			(#{PlayerKpi.playerKpiID,jdbcType=VARCHAR},
+			#{PlayerKpi.playerID,jdbcType=VARCHAR},
+			#{PlayerKpi.clubID,jdbcType=VARCHAR},
+			#{PlayerKpi.blindType,jdbcType=INTEGER}, 
+			#{PlayerKpi.kpiCode,jdbcType=VARCHAR},
+			#{PlayerKpi.kpiValue,jdbcType=VARCHAR},
+			#{PlayerKpi.updateDT,jdbcType=VARCHAR})
+		</foreach>
+  </insert>
+</mapper>

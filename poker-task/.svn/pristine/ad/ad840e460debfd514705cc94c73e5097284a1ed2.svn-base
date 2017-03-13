@@ -1,0 +1,162 @@
+package com.slt.poker.dao;
+
+import java.util.List;
+
+import org.apache.ibatis.annotations.Param;
+
+import com.slt.poker.dto.PlayerKpi;
+
+
+public interface PlayerKpiMapper extends DaoMapper{
+	/** 2002-2007各位置入池率 **/
+	List<PlayerKpi> findBetKpiList(@Param("position")String position);
+	
+	/** 2008合计加注入池率 **/
+	List<PlayerKpi> findTotalRaiseBetKpiList();
+	
+	/** 2009-2014各位置加注入池率 **/
+	List<PlayerKpi> findRaiseKpiList(@Param("position")String string);
+	
+	/** 2015合计冷跟注 **/
+	List<PlayerKpi> findTotalColdCallKpiList();
+	
+	/** 2016-2021各位置冷跟注率 **/
+	List<PlayerKpi> findColdCallKpiList(@Param("position")String string);
+	
+	/** 2022合计溜入率 **/
+	List<PlayerKpi> findTotalSneakInKpiList();
+	
+	/** 2023-2028各位置溜入率**/
+	List<PlayerKpi> findSneakInKpiList(@Param("position")String string);
+	
+	/** 2029合计3Bet率 **/
+	List<PlayerKpi> findTotalBetThreeKpiList();
+	
+	/** 2030-2035 3Bet率 **/
+	List<PlayerKpi> findBetThreeKpiList(@Param("position")String string);
+	
+	/** 2036合计跟3Bet率 **/
+	List<PlayerKpi> findTotalCallBetThreeKpiList();
+	
+	/** 2037-2042跟3Bet率 **/
+	List<PlayerKpi> findCallBetThreeKpiList(@Param("position")String string);
+	
+	/** 2043合计弃3Bet率 **/
+	List<PlayerKpi> findTotalReRaiseBetThreeKpiList();
+	
+	/** 2044-2049弃3Bet率 **/
+	List<PlayerKpi> findReRaiseBetThreeKpiList(@Param("position")String string);
+	
+	/** 2050-2051加注或跟注3Bet时的AA比例,次数 **/
+	List<PlayerKpi> findCallOrRaiseBetThree_PatternAA();
+	
+	/** 2052-2053相对后位加3Bet的AA比例,次数  **/
+	List<PlayerKpi> findRaiseBetThree_Mp_PatternAA();
+	
+	/** 2054-2055相对后位跟3Bet的AA比例,次数  **/
+	List<PlayerKpi> findCallBetThree_Mp_PatternAA();
+	
+	/** 2056-2057相对前位加3Bet的AA比例,次数  **/
+	List<PlayerKpi> findRaiseBetThree_Ep_PatternAA();
+	
+	/** 2058-2059相对前位跟3Bet的AA比例,次数 **/
+	List<PlayerKpi> findCallBetThree_Ep_PatternAA();
+	
+	/** 2060-2061相对前位加4Bet+的AA比例,次数  **/
+	List<PlayerKpi> findRaiseBetFour_Ep_PatternAA();
+	
+	/** 2062-2063相对前位跟4Bet+的AA比例,次数  **/
+	List<PlayerKpi> findCallBetFour_Ep_PatternAA();
+	
+	/** 2064-2065加注或跟注3Bet时的AA/KK/QQ/AK比例,次数   **/
+	List<PlayerKpi> findCallOrRaiseBetThree_PatternStrong();
+	
+	/** 2066-2067相对后位加3Bet的AA/KK/QQ/AK比例,次数   **/
+	List<PlayerKpi> findRaiseBetThree_Mp_PatternStrong();
+	
+	/** 2068-2069相对后位跟3Bet的AA/KK/QQ/AK比例,次数  **/
+	List<PlayerKpi> findCallBetThree_Mp_PatternStrong();
+	
+	/** 2070-2071相对前位加3Bet的AA/KK/QQ/AK比例,次数   **/
+	List<PlayerKpi> findRaiseBetThree_Ep_PatternStrong();
+	
+	/** 2072-2073相对前位跟3Bet的AA/KK/QQ/AK比例,次数  **/
+	List<PlayerKpi> findCallBetThree_Ep_PatternStrong();
+	
+	/** 2074-2075相对前位加4Bet+的AA/KK/QQ/AK比例,次数  **/
+	List<PlayerKpi> findRaiseBetFour_Ep_PatternStrong();
+	
+	/** 2076-2077相对前位跟4Bet+的AA/KK/QQ/AK比例,次数  **/
+	List<PlayerKpi> findCallBetFour_Ep_PatternStrong();
+	
+	/** 2078-2079加注或跟注3Bet时的口袋对比例,次数   **/
+	List<PlayerKpi> findCallOrRaiseBetThree_PatternPoket();
+	
+	/** 2080-2081相对后位加3Bet的口袋对比例,次数   **/
+	List<PlayerKpi> findRaiseBetThree_Mp_PatternPoket();
+	
+	/** 2082-2083相对后位跟3Bet的口袋对比例,次数   **/
+	List<PlayerKpi> findCallBetThree_Mp_PatternPoket();
+	
+	/** 2084-2085相对前位加3Bet的口袋对比例,次数  **/
+	List<PlayerKpi> findRaiseBetThree_Ep_PatternPoket();
+	
+	/** 2086-2087相对前位跟3Bet的口袋对比例,次数   **/
+	List<PlayerKpi> findCallBetThree_Ep_PatternPoket();
+	
+	/** 2088-2089相对前位加4Bet+的口袋对比例,次数   **/
+	List<PlayerKpi> findRaiseBetFour_Ep_PatternPoket();
+	
+	/** 2090-2091相对前位跟4Bet+的口袋对比例,次数   **/
+	List<PlayerKpi> findCallBetFour_Ep_PatternPoket();
+	
+	/** 2092-2093加注或跟注3Bet时的其他手牌比例,次数   **/
+	List<PlayerKpi> findCallOrRaiseBetThree_PatternOther();
+	
+	/** 2094-2095相对后位加3Bet的其他手牌比例,次数   **/
+	List<PlayerKpi> findRaiseBetThree_Mp_PatternOther();
+	
+	/** 2096-2097相对后位跟3Bet的其他手牌比例,次数   **/
+	List<PlayerKpi> findCallBetThree_Mp_PatternOther();
+	
+	/** 2098-2099相对前位加3Bet的其他手牌比例,次数   **/
+	List<PlayerKpi> findRaiseBetThree_Ep_PatternOther();
+	
+	/** 2100-2101相对前位跟3Bet的其他手牌比例,次数   **/
+	List<PlayerKpi> findCallBetThree_Ep_PatternOther();
+	
+	/** 2102-2103相对前位加4Bet+的其他手牌比例,次数   **/
+	List<PlayerKpi> findRaiseBetFour_Ep_PatternOther();
+	
+	/** 2104-2105相对前位跟4Bet+的其他手牌比例,次数   **/
+	List<PlayerKpi> findCallBetFour_Ep_PatternOther();
+	
+	/** 2106位置技术   **/
+	List<PlayerKpi> findPostionSkill();
+	
+	/** 根据kpicode删除数据 **/
+	void deleteKpiByKpiCode(@Param("kpiCode")String kpiCode);
+	/** 批量插入数据 **/
+	void insertKpiBatch(List<PlayerKpi> KpiList);
+	
+	/** 根据指标编号，在牌手指标表(SLT_PLAYER_KPI)中删除对应记录 **/
+	void deletePlayerKpiById(@Param("statisticStage")String statisticStage);
+	/**1001-1002保存7天和30的盈利**/
+	void saveSevenDayProfit (List<PlayerKpi> PlayerKpiList);
+	
+	/***1003战绩统计每个用户在每个俱乐部每个盲注级别下的战绩格式为 (总盈利/总手数/大盲)*100 **/
+	List<PlayerKpi> findPlayerMilitaryExploits(@Param("gameStage") String gameStage);
+	
+	/***1004翻牌前主动下注到池里的次数/总游戏次数(大盲位的check和被动收pot不考虑) **/
+	List<PlayerKpi> findPlayerInitiativePool(@Param("gameStage") String gameStage);
+	
+	/***1005 收pot次数/(主动入池次数+被动入池次数+被动收pot次数)四舍五入保留两位小数**/
+	List<PlayerKpi> findPlayerWinRate(@Param("gameStage") String gameStage);
+	
+	/***1006 摊牌次数/入池次数**/
+	List<PlayerKpi> findPlayerHavaShowdown(@Param("gameStage") String gameStage);
+	
+	/***1007 (摊牌盈利-摊牌亏损)/大盲**/
+	List<PlayerKpi> findPlayerHavaShowdownWinRate(@Param("gameStage") String gameStage);
+
+}

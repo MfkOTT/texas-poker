@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.slt.poker.dao.GameCommunityCardMapper" >
+  <resultMap id="BaseResultMap" type="com.slt.poker.dto.GameCommunityCard" >
+    <id column="CommunityCardID" property="communityCardID" jdbcType="VARCHAR" />
+    <result column="GameID" property="gameID" jdbcType="VARCHAR" />
+    <result column="GameStage" property="gameStage" jdbcType="VARCHAR" />
+    <result column="CommunityCards" property="communityCards" jdbcType="VARCHAR" />
+    <result column="CommunityColor" property="communityColor" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    CommunityCardID, GameID, GameStage, CommunityCards, CommunityColor
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from slt_game_communitycard
+    where CommunityCardID = #{communityCardID,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from slt_game_communitycard
+    where CommunityCardID = #{communityCardID,jdbcType=VARCHAR}
+  </delete>
+  <insert id="insert" parameterType="com.slt.poker.dto.GameCommunityCard" >
+    insert into slt_game_communitycard (CommunityCardID, GameID, GameStage, 
+      CommunityCards, CommunityColor)
+    values (#{communityCardID,jdbcType=VARCHAR}, #{gameID,jdbcType=VARCHAR}, #{gameStage,jdbcType=VARCHAR}, 
+      #{communityCards,jdbcType=VARCHAR}, #{communityColor,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.slt.poker.dto.GameCommunityCard" >
+    insert into slt_game_communitycard
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="communityCardID != null" >
+        CommunityCardID,
+      </if>
+      <if test="gameID != null" >
+        GameID,
+      </if>
+      <if test="gameStage != null" >
+        GameStage,
+      </if>
+      <if test="communityCards != null" >
+        CommunityCards,
+      </if>
+      <if test="communityColor != null" >
+        CommunityColor,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="communityCardID != null" >
+        #{communityCardID,jdbcType=VARCHAR},
+      </if>
+      <if test="gameID != null" >
+        #{gameID,jdbcType=VARCHAR},
+      </if>
+      <if test="gameStage != null" >
+        #{gameStage,jdbcType=VARCHAR},
+      </if>
+      <if test="communityCards != null" >
+        #{communityCards,jdbcType=VARCHAR},
+      </if>
+      <if test="communityColor != null" >
+        #{communityColor,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.slt.poker.dto.GameCommunityCard" >
+    update slt_game_communitycard
+    <set >
+      <if test="gameID != null" >
+        GameID = #{gameID,jdbcType=VARCHAR},
+      </if>
+      <if test="gameStage != null" >
+        GameStage = #{gameStage,jdbcType=VARCHAR},
+      </if>
+      <if test="communityCards != null" >
+        CommunityCards = #{communityCards,jdbcType=VARCHAR},
+      </if>
+      <if test="communityColor != null" >
+        CommunityColor = #{communityColor,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where CommunityCardID = #{communityCardID,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.slt.poker.dto.GameCommunityCard" >
+    update slt_game_communitycard
+    set GameID = #{gameID,jdbcType=VARCHAR},
+      GameStage = #{gameStage,jdbcType=VARCHAR},
+      CommunityCards = #{communityCards,jdbcType=VARCHAR},
+      CommunityColor = #{communityColor,jdbcType=VARCHAR}
+    where CommunityCardID = #{communityCardID,jdbcType=VARCHAR}
+  </update>
+</mapper>

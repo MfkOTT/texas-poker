@@ -1,0 +1,592 @@
+package com.slt.poker.service;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.slt.poker.dao.BindInfoMapper;
+import com.slt.poker.dao.FlopPlayerKpiMapper;
+import com.slt.poker.dao.PlayerKpiMapper;
+import com.slt.poker.dao.ProfitListMapper;
+import com.slt.poker.dto.FlopPlayerKpi;
+import com.slt.poker.dto.PlayerKpi;
+import com.slt.poker.util.CalcUtil;
+import com.slt.poker.util.NonceUtil;
+import com.slt.poker.util.SimpleDateUtil;
+/**
+ * flop阶段指标
+ */
+@Service
+public class FlopPlayerKpiService {
+
+	@Autowired
+	private PlayerKpiMapper playerKpiMapper;
+	@Autowired
+	private FlopPlayerKpiMapper flopPlayerKpiMapper;
+	@Autowired
+	private ProfitListMapper profitListMapper;
+	@Autowired
+	private BindInfoMapper bindInfoMapper;
+	
+	/**
+	 * 3001
+	 * flop胜率
+	 * 在flop上收pot次数/见到flop的次数
+     * 见flop次数未计算在preflop推allin的
+	 * @throws Exception
+	 */
+	public void saveFlopPlayerWinRate() throws Exception{
+		final String kpiCode = "3001";
+		List<FlopPlayerKpi> playerKpitList = this.flopPlayerKpiMapper.findFlopPlayerWinRate();
+		if(!playerKpitList.isEmpty()){
+			this.doClubKpiValue(playerKpitList, kpiCode);
+		}
+	}
+	
+	/**
+	 * 3002
+	 * 总Cbet率
+	 * 在preflop中最后一个加注的在flop上第一下注的次数/最后一个在preflop上加注的次数
+	 * @throws Exception
+	 */
+	public void saveFlopPlayerCbetRate() throws Exception{
+		final String kpiCode = "3002";
+		List<FlopPlayerKpi> playerKpitList = this.flopPlayerKpiMapper.findFlopPlayerCbetRate();
+		if(!playerKpitList.isEmpty()){
+			this.doClubKpiValue(playerKpitList, kpiCode);
+		}
+	}
+	
+	
+	/**
+	 * 3003
+	 * 有位置的CBet率
+	 * 在最后位的cbet次数/总cbet次数
+	 * @throws Exception
+	 */
+	public void saveFlopPlayerPositionCbetRate() throws Exception{
+		final String kpiCode = "3003";
+		List<FlopPlayerKpi> playerKpitList = this.flopPlayerKpiMapper.findFlopPlayerPositionCbetRate();
+		if(!playerKpitList.isEmpty()){
+			this.doClubKpiValue(playerKpitList, kpiCode);
+		}
+	}
+	
+	
+	/**
+	 * 3004
+	 * 无位置的CBet
+	 * 在最前位的cbet次数/总cbet次数
+	 * @throws Exception
+	 */
+	public void saveFlopPlayerNoPositionCbetRate() throws Exception{
+		final String kpiCode = "3004";
+		List<FlopPlayerKpi> playerKpitList = this.flopPlayerKpiMapper.findFlopPlayerNoPositionCbetRate();
+		if(!playerKpitList.isEmpty()){
+			this.doClubKpiValue(playerKpitList, kpiCode);
+		}
+	}
+	
+	/**
+	 * 3005
+	 * Cbet面对raise的跟注率
+	 * Cbet面对raise的跟注次数/Cbet面对raise的总次数
+	 * @throws Exception
+	 */
+	public void saveFlopPlayerCbetRaiseRate() throws Exception{
+		final String kpiCode = "3005";
+		List<FlopPlayerKpi> playerKpitList = this.flopPlayerKpiMapper.findFlopPlayerCbetRaiseRate();
+		if(!playerKpitList.isEmpty()){
+			this.doClubKpiValue(playerKpitList, kpiCode);
+		}
+	}
+	
+	
+	/**
+	 * 3006
+	 * Cbet面对raise的Reraise率
+	 * Cbet面对raise的加注次数/Cbet面对raise的总次数
+	 * @throws Exception
+	 */
+	public void saveFlopPlayerCbetReraiseRate() throws Exception{
+		final String kpiCode = "3006";
+		List<FlopPlayerKpi> playerKpitList = this.flopPlayerKpiMapper.findFlopPlayerCbetReraiseRate();
+		if(!playerKpitList.isEmpty()){
+			this.doClubKpiValue(playerKpitList, kpiCode);
+		}
+	}
+	
+	
+	/**
+	 * 3007
+	 * Cbet面对raise的弃牌率
+	 * Cbet面对raise的弃牌次数/Cbet面对raise的总次数
+	 * @throws Exception
+	 */
+	public void saveFlopCbetRaiseBackOutRate() throws Exception{
+		final String kpiCode = "3007";
+		List<FlopPlayerKpi> playerKpitList = this.flopPlayerKpiMapper.findFlopCbetRaiseBackOutRate();
+		if(!playerKpitList.isEmpty()){
+			this.doClubKpiValue(playerKpitList, kpiCode);
+		}
+	}
+	
+	/**
+	 * 3008
+	 * 未Cbet的Check-Call率
+	 * 未cbet的check-call次数/未Cbet被bet的次数
+	 * @throws Exception
+	 */
+	public void saveFlopNoCBetCheckCallRate() throws Exception{
+		final String kpiCode = "3008";
+		List<FlopPlayerKpi> playerKpitList = this.flopPlayerKpiMapper.findFlopNoCBetCheckCallRate();
+		if(!playerKpitList.isEmpty()){
+			this.doClubKpiValue(playerKpitList, kpiCode);
+		}
+	}
+	/**
+	 * 3009
+	 * 未Cbet的Check-Rasie率
+	 * 未cbet的check-rasie次数/未Cbet被bet的次数
+	 * @throws Exception
+	 */
+	public void saveFlopNoCBetCheckRaiseRate() throws Exception{
+		final String kpiCode = "3009";
+		List<FlopPlayerKpi> playerKpitList = this.flopPlayerKpiMapper.findFlopNoCBetCheckRaiseRate();
+		if(!playerKpitList.isEmpty()){
+			this.doClubKpiValue(playerKpitList, kpiCode);
+		}		
+	}
+	/**
+	 * 3010
+	 * 未Cbet的Check-Fold率
+	 * 未cbet的check-fold次数/未Cbet被bet的次数
+	 * @throws Exception
+	 */
+	public void saveFlopNoCBetCheckFoldRate() throws Exception{
+		final String kpiCode = "3010";
+		List<FlopPlayerKpi> playerKpitList = this.flopPlayerKpiMapper.findFlopNoCBetCheckFoldRate();
+		if(!playerKpitList.isEmpty()){
+			this.doClubKpiValue(playerKpitList, kpiCode);
+		}		
+	}
+	/**
+	 * 3011
+	 * 总Fold给Cbet率
+	 * @throws Exception
+	 */
+	public void saveFlopTotalFoldCBetRate() throws Exception{
+		final String kpiCode = "3011";
+		List<FlopPlayerKpi> playerKpitList = this.flopPlayerKpiMapper.findFlopTotalFoldCBetRate();
+		if(!playerKpitList.isEmpty()){
+			this.doClubKpiValue(playerKpitList, kpiCode);
+		}		
+	}
+	/**
+	 * 3012
+	 * 有位置Fold给Cbet率
+	 * @throws Exception
+	 */
+	public void saveFlopTotalPositionFoldCBetRate() throws Exception{
+		final String kpiCode = "3012";
+		List<FlopPlayerKpi> playerKpitList = this.flopPlayerKpiMapper.findFlopTotalPositionFoldCBetRate();
+		if(!playerKpitList.isEmpty()){
+			this.doClubKpiValue(playerKpitList, kpiCode);
+		}		
+	}
+	/**
+	 * 3013
+	 * 无位置Fold给Cbet率
+	 * @throws Exception
+	 */
+	public void saveFlopTotalNoPositionFolddCBetRate() throws Exception{
+		final String kpiCode = "3013";
+		List<FlopPlayerKpi> playerKpitList = this.flopPlayerKpiMapper.findFlopTotalNoPositionFolddCBetRate();
+		if(!playerKpitList.isEmpty()){
+			this.doClubKpiValue(playerKpitList, kpiCode);
+		}		
+	}
+	/**
+	 * 3014
+	 * 总Call Cbet率
+	 * call别人Cbet的次数/面对Cbet的次数
+	 * @throws Exception
+	 */
+	public void saveFlopTotalCallCBetRate() throws Exception{
+		final String kpiCode = "3014";
+		List<FlopPlayerKpi> playerKpitList = this.flopPlayerKpiMapper.findFlopTotalCallCBetRate();
+		if(!playerKpitList.isEmpty()){
+			this.doClubKpiValue(playerKpitList, kpiCode);
+		}		
+	}
+	/**
+	 * 3015
+	 * 有位置Call Cbet率
+	 * 有位置时call别人Cbet的次数/总call别Cbet的次数
+	 * @throws Exception
+	 */
+	public void saveFlopTotalPositionCallCBetRate() throws Exception{
+		final String kpiCode = "3015";
+		List<FlopPlayerKpi> playerKpitList = this.flopPlayerKpiMapper.findFlopTotalPositionCallCBetRate();
+		if(!playerKpitList.isEmpty()){
+			this.doClubKpiValue(playerKpitList, kpiCode);
+		}		
+	}
+	/**
+	 * 3016
+	 * 无位置Call Cbet率
+	 * 无位置时call别人Cbet的次数/总call别Cbet的次数
+	 * @throws Exception
+	 */
+	public void saveFlopTotalNoPositionCallCBetRate() throws Exception{
+		final String kpiCode = "3016";
+		List<FlopPlayerKpi> playerKpitList = this.flopPlayerKpiMapper.findFlopTotalNoPositionCallCBetRate();
+		if(!playerKpitList.isEmpty()){
+			this.doClubKpiValue(playerKpitList, kpiCode);
+		}		
+	}
+	/**
+	 * 3017
+	 * 总Raise Cbet率
+	 * Raise别人Cbet的次数/面对Cbet的次数
+	 * @throws Exception
+	 */
+	public void saveFlopTotalRaiseCBetRate() throws Exception{
+		final String kpiCode = "3017";
+		List<FlopPlayerKpi> playerKpitList = this.flopPlayerKpiMapper.findFlopTotalRaiseCBetRate();
+		if(!playerKpitList.isEmpty()){
+			this.doClubKpiValue(playerKpitList, kpiCode);
+		}		
+	}
+	/**
+	 * 3018
+	 * 有位置Raise Cbet率
+	 * 有位置时raise别人Cbet的次数/总raise别人Cbet的次数
+	 * @throws Exception
+	 */
+	public void saveFlopTotalPositionRaiseCBetRate() throws Exception{
+		final String kpiCode = "3018";
+		List<FlopPlayerKpi> playerKpitList = this.flopPlayerKpiMapper.findFlopTotalPositionRaiseCBetRate();
+		if(!playerKpitList.isEmpty()){
+			this.doClubKpiValue(playerKpitList, kpiCode);
+		}		
+	}
+	/**
+	 * 3019
+	 * 无位置Raise Cbet率
+	 * 无位置时raise别人Cbet的次数/总raise别人Cbet的次数
+	 * @throws Exception
+	 */
+	public void saveFlopTotalNoPositionRaiseCBetRate() throws Exception{
+		final String kpiCode = "3019";
+		List<FlopPlayerKpi> playerKpitList = this.flopPlayerKpiMapper.findFlopTotalNoPositionRaiseCBetRate();
+		if(!playerKpitList.isEmpty()){
+			this.doClubKpiValue(playerKpitList, kpiCode);
+		}		
+	}
+	/**
+	 * 3020
+	 * 面对Donk下注Fold 面对Donk下注Call
+	 * Donk-fold的次数/面对donk的总次数
+	 * @throws Exception
+	 */
+	public void saveFlopFoldWithDonkRate() throws Exception{
+		final String kpiCode = "3020";
+		List<FlopPlayerKpi> playerKpitList = this.flopPlayerKpiMapper.findFlopFoldWithDonkRate();
+		if(!playerKpitList.isEmpty()){
+			this.doClubKpiValue(playerKpitList, kpiCode);
+		}		
+	}
+	/**
+	 * 3021
+	 * 面对Donk下注Call
+	 * Donk-call的次数/面对donk的总次数
+	 * @throws Exception
+	 */
+	public void saveFlopCallWithDonkRate() throws Exception{
+		final String kpiCode = "3021";
+		List<FlopPlayerKpi> playerKpitList = this.flopPlayerKpiMapper.findFlopCallWithDonkRate();
+		if(!playerKpitList.isEmpty()){
+			this.doClubKpiValue(playerKpitList, kpiCode);
+		}		
+	}
+	/**
+	 * 3022
+	 * 面对Donk下注raise
+	 * Donk-raise的次数/面对donk的总次数
+	 * @throws Exception
+	 */
+	public void saveFlopRaiseWithDonkRate() throws Exception{
+		final String kpiCode = "3022";
+		List<FlopPlayerKpi> playerKpitList = this.flopPlayerKpiMapper.findFlopRaiseWithDonkRate();
+		if(!playerKpitList.isEmpty()){
+			this.doClubKpiValue(playerKpitList, kpiCode);
+		}		
+	}
+	/**
+	 * 3023
+	 * 总溜入底池首先下注率
+	 * limp-bet的总次数/limp的总次数
+	 * @throws Exception
+	 */
+	public void saveTotalLimpInPotBetRate() throws Exception{
+		final String kpiCode = "3023";
+		List<FlopPlayerKpi> playerKpitList = this.flopPlayerKpiMapper.findTotalLimpInPotBetRate();
+		if(!playerKpitList.isEmpty()){
+			this.doClubKpiValue(playerKpitList, kpiCode);
+		}
+	}
+	/**
+	 * 3024-3029 (BB位暂不计算)
+	 * 各位置溜入底池首先下注率
+	 * limp-bet的总次数/limp的总次数
+	 * @throws Exception
+	 */
+	public void saveLimpInPotBetRate() throws Exception{
+		final String[] position = new String[]{"EP","MP","CO","BTN","SB"};
+		//kpiCode从3024开始
+		for (int i = 0 ; i< position.length ; i++) {
+			List<FlopPlayerKpi> playerKpitList = this.flopPlayerKpiMapper.findLimpInPotBetRate(position[i]);
+			if(playerKpitList.isEmpty()){
+				continue;
+			}
+			String kpiCode = String.valueOf(i+3024);
+			this.doClubKpiValue(playerKpitList, kpiCode);
+		}
+	}
+	/**
+	 * 3030
+	 * 总溜入底池平跟率
+	 * limp-Call的总次数/limp的总次数
+	 * @throws Exception
+	 */
+	public void saveTotalLimpInPotCallRate() throws Exception{
+		final String kpiCode = "3030";
+		List<FlopPlayerKpi> playerKpitList = this.flopPlayerKpiMapper.findTotalLimpInPotCallRate();
+		if(!playerKpitList.isEmpty()){
+			this.doClubKpiValue(playerKpitList, kpiCode);
+		}
+	}
+	/**
+	 * 3031-3035 (BB位暂不计算)
+	 * 各位置溜入底池平跟率
+	 * limp-call的总次数/limp的总次数
+	 * @throws Exception
+	 */
+	public void saveLimpInPotCallRate() throws Exception{
+		final String[] position = new String[]{"EP","MP","CO","BTN"};
+		//kpiCode从3031开始
+		for (int i = 0 ; i< position.length ; i++) {
+			List<FlopPlayerKpi> playerKpitList = this.flopPlayerKpiMapper.findLimpInPotCallRate(position[i]);
+			if(playerKpitList.isEmpty()){
+				continue;
+			}
+			String kpiCode = String.valueOf(i+3031);
+			this.doClubKpiValue(playerKpitList, kpiCode);
+		}		
+	}
+	/**
+	 * 3036
+	 * 总溜入底池再加注率
+	 * limp-Raise的总次数/limp的总次数
+	 * @throws Exception
+	 */
+	public void saveTotalLimpInPotRaiseRate() throws Exception{
+		final String kpiCode = "3036";
+		List<FlopPlayerKpi> playerKpitList = this.flopPlayerKpiMapper.findTotalLimpInPotRaiseRate();
+		if(!playerKpitList.isEmpty()){
+			this.doClubKpiValue(playerKpitList, kpiCode);
+		}		
+	}
+	/**
+	 * 3037-3041 (BB位暂不计算)
+	 * 各位置溜入底池再加注率
+	 * limp-bet的总次数/limp的总次数
+	 * @throws Exception
+	 */
+	public void saveLimpInPotRaiseRate() throws Exception{
+		final String[] position = new String[]{"EP","MP","CO","BTN"};
+		//kpiCode从3037开始
+		for (int i = 0 ; i< position.length ; i++) {
+			List<FlopPlayerKpi> playerKpitList = this.flopPlayerKpiMapper.findLimpInPotRaiseRate(position[i]);
+			if(playerKpitList.isEmpty()){
+				continue;
+			}
+			String kpiCode = String.valueOf(i+3037);
+			this.doClubKpiValue(playerKpitList, kpiCode);
+		}		
+	}
+	/**
+	 * 3042
+	 * 总溜入底池check-call率
+	 * limp-check-call的次数/limp的总次数
+	 * @throws Exception
+	 */
+	public void saveTotalLimpInPotCheckCallRate() throws Exception{
+		final String kpiCode = "3042";
+		List<FlopPlayerKpi> playerKpitList = this.flopPlayerKpiMapper.findTotalLimpInPotCheckCallRate();
+		if(!playerKpitList.isEmpty()){
+			this.doClubKpiValue(playerKpitList, kpiCode);
+		}		
+	}
+	/**
+	 * 3043-3047(BB位暂不计算)
+	 * 各位置溜入底池首先下注率
+	 * limp-bet的总次数/limp的总次数
+	 * @throws Exception
+	 */
+	public void saveLimpInPotCheckCallRate() throws Exception{
+		final String[] position = new String[]{"EP","MP","CO","BTN"};
+		//kpiCode从3043开始
+		for (int i = 0 ; i< position.length ; i++) {
+			List<FlopPlayerKpi> playerKpitList = this.flopPlayerKpiMapper.findLimpInPotCheckCallRate(position[i]);
+			if(playerKpitList.isEmpty()){
+				continue;
+			}
+			String kpiCode = String.valueOf(i+3043);
+			this.doClubKpiValue(playerKpitList, kpiCode);
+		}		
+	}
+	/**
+	 * 3048
+	 * 总溜入底池check-raise率
+	 * limp-check-Raise的次数/limp的总次数
+	 * @throws Exception
+	 */
+	public void saveTotalLimpInPotCheckRaiseRate() throws Exception{
+		final String kpiCode = "3048";
+		List<FlopPlayerKpi> playerKpitList = this.flopPlayerKpiMapper.findTotalLimpInPotCheckRaiseRate();
+		if(!playerKpitList.isEmpty()){
+			this.doClubKpiValue(playerKpitList, kpiCode);
+		}		
+	}
+	/**
+	 * 3049-3053 (BB位暂不计算)
+	 * 各位置溜入底池check-raise率
+	 * limp-bet的总次数/limp的总次数
+	 * @throws Exception
+	 */
+	public void saveLimpInPotCheckRaiseRate() throws Exception{
+		final String[] position = new String[]{"EP","MP","CO","BTN"};
+		//kpiCode从3049开始
+		for (int i = 0 ; i< position.length ; i++) {
+			List<FlopPlayerKpi> playerKpitList = this.flopPlayerKpiMapper.findLimpInPotCheckRaiseRate(position[i]);
+			if(playerKpitList.isEmpty()){
+				continue;
+			}
+			String kpiCode = String.valueOf(i+3049);
+			this.doClubKpiValue(playerKpitList, kpiCode);
+		}		
+	}
+	/**
+	 * 3054
+	 * 总溜入底池弃牌率
+	 * limp-fold的总次数/limp的总次数
+	 * @throws Exception
+	 */
+	public void saveTotalLimpInPotFoldRate() throws Exception{
+		final String kpiCode = "3054";
+		List<FlopPlayerKpi> playerKpitList = this.flopPlayerKpiMapper.findTotalLimpInPotFoldRate();
+		if(!playerKpitList.isEmpty()){
+			this.doClubKpiValue(playerKpitList, kpiCode);
+		}		
+	}
+	/**
+	 * 3055-3060 (BB位暂不计算)
+	 * 各位置溜入底池弃牌率
+	 * limp-bet的总次数/limp的总次数
+	 * @throws Exception
+	 */
+	public void saveLimpInPotFoldRate() throws Exception{
+		final String[] position = new String[]{"EP","MP","CO","BTN","SB"};
+		//kpiCode从3024开始
+		for (int i = 0 ; i< position.length ; i++) {
+			List<FlopPlayerKpi> playerKpitList = this.flopPlayerKpiMapper.findLimpInPotFoldRate(position[i]);
+			if(playerKpitList.isEmpty()){
+				continue;
+			}
+			String kpiCode = String.valueOf(i+3055);
+			this.doClubKpiValue(playerKpitList, kpiCode);
+		}		
+	}
+	/**
+	 * 3061
+	 * Cbet最终胜率
+	 * 有Cbet动作的收Pot次数/总Cbet次数
+	 * @throws Exception
+	 */
+	public void saveFinallyCbetRate() throws Exception{
+		final String kpiCode = "3061";
+		List<FlopPlayerKpi> playerKpitList = this.flopPlayerKpiMapper.findFinallyCbetRate();
+		if(!playerKpitList.isEmpty()){
+			this.doClubKpiValue(playerKpitList, kpiCode);
+		}		
+	}
+	
+	/**
+	 * 计算俱乐部平均值并入库
+	 * 
+	 * @param playerKpitList
+	 *            待计算数据
+	 * @param kpiCode
+	 *            指标
+	 */
+	private void doClubKpiValue(List<FlopPlayerKpi> playerKpitList,
+			String kpiCode) {
+		FlopPlayerKpi dataItem; // 数据库中查询到的每条记录
+		Map<String, List<FlopPlayerKpi>> resultMap = new HashMap<String, List<FlopPlayerKpi>>(); // 最终要的结果
+		Map<String, Map<String, String>> countMap = new HashMap<String, Map<String, String>>();// 统计俱乐部概率
+		for (int i = 0; i < playerKpitList.size(); i++) {
+			dataItem = playerKpitList.get(i);
+			String str = dataItem.getClubID() + "_" + dataItem.getBlindType();
+			if (resultMap.containsKey(str)) {
+				resultMap.get(str).add(dataItem);
+			} else {
+				List<FlopPlayerKpi> list = new ArrayList<FlopPlayerKpi>();
+				list.add(dataItem);
+				resultMap.put(str, list);
+			}
+
+			// 统计相同俱乐部同类型的值
+			if (countMap.containsKey(str)) {
+				countMap.get(str).put("sumPoolCount",CalcUtil.getNumInfo(countMap.get(str).get("sumPoolCount"),dataItem.getNumerator()));
+				countMap.get(str).put("sumGameCount",CalcUtil.getNumInfo(countMap.get(str).get("sumGameCount"),dataItem.getDenominator()));
+			} else {
+				Map<String, String> map = new HashMap<String, String>();
+				map.put("sumPoolCount", dataItem.getNumerator());
+				map.put("sumGameCount", dataItem.getDenominator());
+				countMap.put(str, map);
+			}
+		}
+		// 循环统一俱乐部和统一盲注类型入库
+		String dateStr = SimpleDateUtil.format(new Date(), "yyyyMMddHHmmss");
+		Iterator it = countMap.entrySet().iterator();
+		List<FlopPlayerKpi> kpiList = new ArrayList<FlopPlayerKpi>();
+		while (it.hasNext()) {
+			Map.Entry entry = (Map.Entry) it.next();
+			String key = (String) entry.getKey();
+			Map<String, String> value = (Map<String, String>) entry.getValue();
+			String divide = CalcUtil.getDivide(value.get("sumPoolCount"),
+					value.get("sumGameCount"), 2);
+			List<FlopPlayerKpi> pList = resultMap.get(key);
+			if (!pList.isEmpty()) {
+				for (FlopPlayerKpi playerKpi : pList) {
+					playerKpi.setPlayerKpiID(NonceUtil.getUuid());
+					playerKpi.setUpdateDT(dateStr);
+					playerKpi.setClubKpiValue(divide);
+					playerKpi.setKpiCode(kpiCode);
+					kpiList.add(playerKpi);
+				}
+			}
+			value.clear();
+		}
+		this.flopPlayerKpiMapper.deleteKpiByKpiCode(kpiCode);
+		this.flopPlayerKpiMapper.insertKpiBatch(kpiList);
+	}
+}

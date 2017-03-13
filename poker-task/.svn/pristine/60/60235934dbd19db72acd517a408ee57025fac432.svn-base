@@ -1,0 +1,15 @@
+log4j.rootLogger=, A1, LOGFILE
+
+# \u6253\u5370\u65e5\u5fd7\u5230\u63a7\u5236\u53f0
+log4j.appender.A1=org.apache.log4j.ConsoleAppender
+log4j.appender.A1.Threshold=DEBUG
+log4j.appender.A1.layout=org.apache.log4j.PatternLayout
+log4j.appender.A1.layout.ConversionPattern=poker-task\:[%d{yyyy-MM-dd HH\:mm\:ss}] %5p %c{1}\:%L - %m%n
+
+log4j.appender.LOGFILE=org.apache.log4j.DailyRollingFileAppender
+log4j.appender.LOGFILE.File=${catalina.home}/poker/poker_task.log
+#log4j.appender.LOGFILE.File=d:/logs/exercise_task.log
+log4j.appender.LOGFILE.Append=true
+log4j.appender.LOGFILE.Threshold=DEBUG
+log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
+log4j.appender.LOGFILE.layout.ConversionPattern=poker-task\:[%d{yyyy-MM-dd HH\:mm\:ss}] %5p %c{1}\:%L - %m%n

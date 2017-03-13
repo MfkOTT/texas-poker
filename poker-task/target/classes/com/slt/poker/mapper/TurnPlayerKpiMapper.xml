@@ -1,0 +1,1224 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.slt.poker.dao.TurnPlayerKpiMapper" >
+  <resultMap id="BaseResultMap" type="com.slt.poker.dto.TurnPlayerKpi" >
+    <id column="PlayerKpiID" property="playerKpiID" jdbcType="VARCHAR" />
+    <result column="PlayerID" property="playerID" jdbcType="VARCHAR" />
+    <result column="ClubID" property="clubID" jdbcType="VARCHAR" />
+    <result column="BlindType" property="blindType" jdbcType="INTEGER" />
+    <result column="KpiCode" property="kpiCode" jdbcType="VARCHAR" />
+    <result column="KpiValue" property="kpiValue" jdbcType="VARCHAR" />
+    <result column="ClubKpiValue" property="clubKpiValue" jdbcType="VARCHAR" />
+    <result column="UpdateDT" property="updateDT" jdbcType="VARCHAR" />
+    <result column="Numerator" property="numerator" jdbcType="VARCHAR" />
+    <result column="Denominator" property="denominator" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    PlayerKpiID, PlayerID, ClubID, BlindType, KpiCode, KpiValue, ClubKpiValue, UpdateDT,Numerator,Denominator
+  </sql>
+  	<!-- 4001 - turn胜率 -->
+	<select id="findFlopPlayerWinRate" parameterType="java.lang.String" resultMap="BaseResultMap" >   
+	select a.ClubID,a.BindType as BlindType,a.PlayerID,a.turnCount as Denominator,
+	if(b.winTurnCount is null,0,b.winTurnCount) Numerator,
+	format(if(b.winTurnCount is null,0,b.winTurnCount)/a.turnCount,2) as KpiValue from
+	(select ClubID,BindType,PlayerID, count(distinct(gameID)) turnCount from v_game_action where GameStage = 'turn' 
+	group by ClubID,BindType,PlayerID) as a left outer join
+	(select ClubID,BindType,PlayerID,count(1) winTurnCount from v_game_player where EndStage = 'turn' 
+	<![CDATA[and MatchResult*1>0]]>
+	group by ClubID,BindType,PlayerID) as b
+	on a.ClubID = b.ClubID and a.BindType = b.BindType and a.PlayerID = b.PlayerID
+    </select>
+    <!-- 4002 - turn胜率 -->
+	<select id="findTurnTotalCbetRate" parameterType="java.lang.String" resultMap="BaseResultMap" >   
+	select e.ClubID,e.BindType as BlindType,e.PlayerID,e.fCbetCount as Denominator,
+	if(f.tCbetCount is null,0,f.tCbetCount) Numerator,
+	format(if(f.tCbetCount is null,0,f.tCbetCount)/e.fCbetCount,2) KpiValue from 
+	(select a.ClubID,a.BindType,a.PlayerID,count(1) fCbetCount from
+	(select ClubID,BindType,PlayerID,GameID from v_game_action t  where GameStage = 'flop' and GameAction = 'bet' 
+	and (select count(1) from v_game_action where GameID = t.GameID and PlayerID = t.PlayerID  and GameStage = 'flop' and (GameAction ='fold' or GameAction='call'))=0
+	) as a,
+	(select ClubID,BindType,PlayerID,GameID from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+	and EndStage!='preflop' 
+	and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)
+	) as b
+	where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID
+	group by a.ClubID,a.BindType,a.PlayerID) as e left outer join
+	(select c.ClubID,c.BindType,c.PlayerID, count(1) tCbetCount from 
+	(select ClubID,BindType,PlayerID,GameID from v_game_action  where GameStage = 'turn' and (GameAction = 'bet' or GameAction ='betAllin'))
+	as c,
+	(select a.ClubID,a.BindType,a.PlayerID,a.GameID from
+	(select ClubID,BindType,PlayerID,GameID from v_game_action t  where GameStage = 'flop' and GameAction = 'bet' 
+	and (select count(1) from v_game_action where GameID = t.GameID  and GameStage = 'flop' and PlayerID = t.PlayerID 
+	and (GameAction ='fold' or GameAction='call'))=0 ) as a,
+	(select ClubID,BindType,PlayerID,GameID from v_game_action f where GameStage = 'preflop' 
+	and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+	and EndStage!='preflop' 
+	and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)
+	) as b
+	where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID)  as d
+	where c.ClubID=d.ClubID and c.BindType=d.BindType and c.PlayerID = d.playerID and c.GameID = d.GameID
+	group by c.ClubID,c.BindType,c.PlayerID) as f
+	on e.ClubID = f.ClubID and e.BindType = f.BindType and e.PlayerID = f.PlayerID
+    </select>
+    <!-- 4003 - turn胜率 -->
+	<select id="findTurnPositionCbetRate" parameterType="java.lang.String" resultMap="BaseResultMap" >   
+	select e.ClubID,e.BindType as BlindType,e.PlayerID,e.tCbetCount as Denominator,
+	if(f.tMPCbetCount is null,0,f.tMPCbetCount) Numerator,
+	format(if(f.tMPCbetCount is null,0,f.tMPCbetCount)/e.tCbetCount,2) KpiValue from 
+	(select c.ClubID,c.BindType,c.PlayerID, count(1) tCbetCount from 
+	(select ClubID,BindType,PlayerID,GameID from v_game_action  where GameStage = 'turn' and (GameAction = 'bet' or GameAction ='betAllin'))
+	as c,
+	(select a.ClubID,a.BindType,a.PlayerID,a.GameID from
+	(select ClubID,BindType,PlayerID,GameID from v_game_action t  where GameStage = 'flop' and GameAction = 'bet'
+	 and (select count(1) from v_game_action where GameID = t.GameID  and GameStage = 'flop' and PlayerID = t.PlayerID and (GameAction ='fold' or GameAction='call'))=0
+	) as a,
+	(select ClubID,BindType,PlayerID,GameID from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+	and EndStage!='preflop' 
+	and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)
+	) as b
+	where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID)  as d
+	where c.ClubID=d.ClubID and c.BindType=d.BindType and c.PlayerID = d.playerID and c.GameID = d.GameID
+	group by c.ClubID,c.BindType,c.PlayerID) as e left outer join
+	(select c.ClubID,c.BindType,c.PlayerID, count(1) tMPCbetCount from 
+	(select ClubID,BindType,PlayerID,GameID,PlayerPosition from v_game_action  where GameStage = 'turn' and (GameAction = 'bet' or GameAction ='betAllin'))
+	as c,
+	(select a.ClubID,a.BindType,a.PlayerID,a.GameID from
+	(select ClubID,BindType,PlayerID,GameID from v_game_action t where GameStage = 'flop' and GameAction = 'bet'
+	 and (select count(1) from v_game_action where GameID = t.GameID  and GameStage = 'flop' and PlayerID = t.PlayerID and (GameAction ='fold' or GameAction='call'))=0
+	) as a,
+	(select ClubID,BindType,PlayerID,GameID from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+	and EndStage!='preflop' 
+	and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)
+	) as b
+	where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID)  as d
+	where c.ClubID=d.ClubID and c.BindType=d.BindType and c.PlayerID = d.playerID and c.GameID = d.GameID 
+	and c.PlayerPosition =(select max(playerPosition) from v_game_action where GameID = c.GameID and GameStage = 'turn')
+	group by c.ClubID,c.BindType,c.PlayerID) as f
+	on e.ClubID = f.ClubID and e.BindType = f.BindType and e.PlayerID = f.PlayerID
+    </select>
+    <!-- 4004 - turn胜率 -->
+	<select id="findTurnNoPositionCbetRate" parameterType="java.lang.String" resultMap="BaseResultMap" >   
+	select e.ClubID,e.BindType as BlindType,e.PlayerID,e.tCbetCount as Denominator,
+	if(f.tEPCbetCount is null,0,f.tEPCbetCount) Numerator,
+	format(if(f.tEPCbetCount is null,0,f.tEPCbetCount)/e.tCbetCount,2) KpiValue from 
+	(select c.ClubID,c.BindType,c.PlayerID, count(1) tCbetCount from 
+	(select ClubID,BindType,PlayerID,GameID from v_game_action  where GameStage = 'turn' and (GameAction = 'bet' or GameAction ='betAllin'))
+	as c,
+	(select a.ClubID,a.BindType,a.PlayerID,a.GameID from
+	(select ClubID,BindType,PlayerID,GameID from v_game_action t  where GameStage = 'flop' and GameAction = 'bet'
+	  and (select count(1) from v_game_action where GameID = t.GameID  and GameStage = 'flop' and PlayerID = t.PlayerID and (GameAction ='fold' or GameAction='call'))=0
+	) as a,
+	(select ClubID,BindType,PlayerID,GameID from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+	and EndStage!='preflop' 
+	and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)
+	) as b
+	where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID)  as d
+	where c.ClubID=d.ClubID and c.BindType=d.BindType and c.PlayerID = d.playerID and c.GameID = d.GameID
+	group by c.ClubID,c.BindType,c.PlayerID) as e left outer join
+	(select c.ClubID,c.BindType,c.PlayerID, count(1) tEPCbetCount from 
+	(select ClubID,BindType,PlayerID,GameID,PlayerPosition from v_game_action  where GameStage = 'turn' and (GameAction = 'bet' or GameAction ='betAllin'))
+	as c,
+	(select a.ClubID,a.BindType,a.PlayerID,a.GameID from
+	(select ClubID,BindType,PlayerID,GameID from v_game_action t where GameStage = 'flop' and GameAction = 'bet'
+	 and (select count(1) from v_game_action where GameID = t.GameID  and GameStage = 'flop' and PlayerID = t.PlayerID and (GameAction ='fold' or GameAction='call'))=0
+	) as a,
+	(select ClubID,BindType,PlayerID,GameID from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+	and EndStage!='preflop' 
+	and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)
+	) as b
+	where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID)  as d
+	where c.ClubID=d.ClubID and c.BindType=d.BindType and c.PlayerID = d.playerID and c.GameID = d.GameID 
+	<![CDATA[and c.PlayerPosition <(select max(playerPosition) from v_game_action ]]>
+	where GameID = c.GameID and GameStage = 'turn')
+	group by c.ClubID,c.BindType,c.PlayerID) as f
+	on e.ClubID = f.ClubID and e.BindType = f.BindType and e.PlayerID = f.PlayerID
+    </select>
+    <!-- 4005 - turn胜率 -->
+	<select id="findTurnCbetRaiseRate" parameterType="java.lang.String" resultMap="BaseResultMap" >   
+	select i.ClubID,i.BindType as BlindType,i.PlayerID,i.cbetRaiseCount as Denominator,
+	if(j.cbetRaiseActionCount is null,0,j.cbetRaiseActionCount) Numerator,
+	format(if(j.cbetRaiseActionCount is null,0,j.cbetRaiseActionCount)/i.cbetRaiseCount,2) KpiValue
+	from (select e.clubID,e.BindType,f.PlayerID,count(1) cbetRaiseCount from 
+	(select * from v_game_action) e,
+	(select c.ClubID,c.BindType,c.PlayerID , c.GameID  from 
+	(select ClubID,BindType,PlayerID,GameID from v_game_action  where GameStage = 'turn' and GameAction = 'bet')
+	as c,
+	(select a.ClubID,a.BindType,a.PlayerID,a.GameID from
+	(select ClubID,BindType,PlayerID,GameID from v_game_action t where GameStage = 'flop' and GameAction = 'bet'
+	  and (select count(1) from v_game_action where GameID = t.GameID  and GameStage = 'flop' and PlayerID = t.PlayerID and (GameAction ='fold' or GameAction='call'))=0
+	) as a,
+	(select ClubID,BindType,PlayerID,GameID from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+	and EndStage!='preflop' 
+	and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)
+	) as b
+	where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID)  as d
+	where c.ClubID=d.ClubID and c.BindType=d.BindType and c.PlayerID = d.playerID and c.GameID = d.GameID) as f
+	where   e.GameID = f.GameID and e.GameStage = 'turn' and e.RasieCount=1 and (e.GameAction = 'raise' or e.GameAction='allin') and e.PlayerID!=f.PlayerID
+	group by e.ClubID,e.BindType,f.PlayerID) as i
+	left outer join
+	(select g.ClubID,g.BindType,g.PlayerID,count(distinct(g.gameID)) cbetRaiseActionCount from
+	(select * from v_game_action) as g,
+	(select e.clubID,e.BindType,f.playerID as cbetPlayer,e.GameID,e.RasieCount  from 
+	(select * from v_game_action) e,
+	(select c.ClubID,c.BindType,c.PlayerID, c.GameID  from 
+	(select ClubID,BindType,PlayerID,GameID from v_game_action  where GameStage = 'turn' and GameAction = 'bet')
+	as c,
+	(select a.ClubID,a.BindType,a.PlayerID,a.GameID from
+	(select ClubID,BindType,PlayerID,GameID from v_game_action t where GameStage = 'flop' and GameAction = 'bet' 
+	and (select count(1) from v_game_action where GameID = t.GameID  and GameStage = 'flop' and PlayerID = t.PlayerID and (GameAction ='fold' or GameAction='call'))=0
+	) as a,
+	(select ClubID,BindType,PlayerID,GameID from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+	and EndStage!='preflop' 
+	and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)
+	) as b
+	where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID)  as d
+	where c.ClubID=d.ClubID and c.BindType=d.BindType and c.PlayerID = d.playerID and c.GameID = d.GameID) as f
+	where   e.GameID = f.GameID and e.GameStage = 'turn' and e.RasieCount=1 and (e.GameAction = 'raise' or e.GameAction='allin') and e.PlayerID!=f.PlayerID) as h
+	where g.GameID = h.GameID and g.GameStage = 'trun' and (g.GameAction = 'call') and g.RasieCount=h.RasieCount+1 and g.PlayerID=h.cbetPlayer
+	group by g.clubID,g.BindType,g.playerID) as j
+	on i.ClubID = j.ClubID and i.BindType = j.BindType and i.PlayerID =j.PlayerID
+    </select>
+    <!-- 4006 - turn胜率 -->
+	<select id="findTurnCbetReRaiseRate" parameterType="java.lang.String" resultMap="BaseResultMap" >   
+	select i.ClubID,i.BindType as BlindType,i.PlayerID,i.cbetRaiseCount as Denominator,
+	if(j.cbetRaiseActionCount is null,0,j.cbetRaiseActionCount) Numerator,
+	format(if(j.cbetRaiseActionCount is null,0,j.cbetRaiseActionCount)/i.cbetRaiseCount,2) KpiValue
+	from
+	(select e.clubID,e.BindType,f.PlayerID,count(1) cbetRaiseCount from 
+	(select * from v_game_action) e,
+	(select c.ClubID,c.BindType,c.PlayerID , c.GameID  from 
+	(select ClubID,BindType,PlayerID,GameID from v_game_action  where GameStage = 'turn' and GameAction = 'bet')
+	as c,
+	(select a.ClubID,a.BindType,a.PlayerID,a.GameID from
+	(select ClubID,BindType,PlayerID,GameID from v_game_action t where GameStage = 'flop' and GameAction = 'bet'
+	  and (select count(1) from v_game_action where GameID = t.GameID  and GameStage = 'flop' and PlayerID = t.PlayerID and (GameAction ='fold' or GameAction='call'))=0
+	) as a,
+	(select ClubID,BindType,PlayerID,GameID from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+	and EndStage!='preflop' 
+	and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)
+	) as b
+	where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID)  as d
+	where c.ClubID=d.ClubID and c.BindType=d.BindType and c.PlayerID = d.playerID and c.GameID = d.GameID) as f
+	where   e.GameID = f.GameID and e.GameStage = 'turn' and e.RasieCount=1 and (e.GameAction = 'raise' or e.GameAction='allin') and e.PlayerID!=f.PlayerID
+	group by e.ClubID,e.BindType,f.PlayerID) as i
+	left outer join
+	(select g.ClubID,g.BindType,g.PlayerID,count(distinct(g.gameID)) cbetRaiseActionCount from
+	(select * from v_game_action) as g,
+	(select e.clubID,e.BindType,f.playerID as cbetPlayer,e.GameID,e.RasieCount  from 
+	(select * from v_game_action) e,
+	(select c.ClubID,c.BindType,c.PlayerID, c.GameID  from 
+	(select ClubID,BindType,PlayerID,GameID from v_game_action  where GameStage = 'turn' and GameAction = 'bet')
+	as c,
+	(select a.ClubID,a.BindType,a.PlayerID,a.GameID from
+	(select ClubID,BindType,PlayerID,GameID from v_game_action t where GameStage = 'flop' and GameAction = 'bet' 
+	  and (select count(1) from v_game_action where GameID = t.GameID  and GameStage = 'flop' and PlayerID = t.PlayerID and (GameAction ='fold' or GameAction='call'))=0
+	) as a,
+	(select ClubID,BindType,PlayerID,GameID from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+	and EndStage!='preflop' 
+	and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)
+	) as b
+	where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID)  as d
+	where c.ClubID=d.ClubID and c.BindType=d.BindType and c.PlayerID = d.playerID and c.GameID = d.GameID) as f
+	where   e.GameID = f.GameID and e.GameStage = 'turn' and e.RasieCount=1 and (e.GameAction = 'raise' or e.GameAction='allin') and e.PlayerID!=f.PlayerID) as h
+	where g.GameID = h.GameID and g.GameStage = 'trun' and (g.GameAction = 'raise' or g.GaeAction='allin') and g.RasieCount=h.RasieCount+1 and g.PlayerID=h.cbetPlayer
+	group by g.clubID,g.BindType,g.playerID) as j
+	on i.ClubID = j.ClubID and i.BindType = j.BindType and i.PlayerID =j.PlayerID
+    </select>
+    <!-- 4007 - turn胜率 -->
+	<select id="findTurnCbetFoldRate" parameterType="java.lang.String" resultMap="BaseResultMap" >   
+	select i.ClubID,i.BindType as BlindType,i.PlayerID,i.cbetRaiseCount as Denominator,
+	if(j.cbetRaiseActionCount is null,0,j.cbetRaiseActionCount) Numerator,
+	 format(if(j.cbetRaiseActionCount is null,0,j.cbetRaiseActionCount)/i.cbetRaiseCount,2) KpiValue
+	from
+	(select e.clubID,e.BindType,f.PlayerID,count(1) cbetRaiseCount from 
+	(select * from v_game_action) e,
+	(select c.ClubID,c.BindType,c.PlayerID , c.GameID  from 
+	(select ClubID,BindType,PlayerID,GameID from v_game_action  where GameStage = 'turn' and GameAction = 'bet')
+	as c,
+	(select a.ClubID,a.BindType,a.PlayerID,a.GameID from
+	(select ClubID,BindType,PlayerID,GameID from v_game_action t where GameStage = 'flop' and GameAction = 'bet'
+	  and (select count(1) from v_game_action where GameID = t.GameID  and GameStage = 'flop' and PlayerID = t.PlayerID and (GameAction ='fold' or GameAction='call'))=0
+	) as a,
+	(select ClubID,BindType,PlayerID,GameID from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+	and EndStage!='preflop' 
+	and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)
+	) as b
+	where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID)  as d
+	where c.ClubID=d.ClubID and c.BindType=d.BindType and c.PlayerID = d.playerID and c.GameID = d.GameID) as f
+	where   e.GameID = f.GameID and e.GameStage = 'turn' and e.RasieCount=1 and (e.GameAction = 'raise' or e.GameAction='allin') and e.PlayerID!=f.PlayerID
+	group by e.ClubID,e.BindType,f.PlayerID) as i
+	left outer join
+	(select g.ClubID,g.BindType,g.PlayerID,count(distinct(g.gameID)) cbetRaiseActionCount from
+	(select * from v_game_action) as g,
+	(select e.clubID,e.BindType,f.playerID as cbetPlayer,e.GameID,e.RasieCount  from 
+	(select * from v_game_action) e,
+	(select c.ClubID,c.BindType,c.PlayerID, c.GameID  from 
+	(select ClubID,BindType,PlayerID,GameID from v_game_action  where GameStage = 'turn' and GameAction = 'bet')
+	as c,
+	(select a.ClubID,a.BindType,a.PlayerID,a.GameID from
+	(select ClubID,BindType,PlayerID,GameID from v_game_action t where GameStage = 'flop' and GameAction = 'bet' 
+	  and (select count(1) from v_game_action where GameID = t.GameID  and GameStage = 'flop' and PlayerID = t.PlayerID and (GameAction ='fold' or GameAction='call'))=0
+	) as a,
+	(select ClubID,BindType,PlayerID,GameID from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+	and EndStage!='preflop' 
+	and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)
+	) as b
+	where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID)  as d
+	where c.ClubID=d.ClubID and c.BindType=d.BindType and c.PlayerID = d.playerID and c.GameID = d.GameID) as f
+	where   e.GameID = f.GameID and e.GameStage = 'turn' and e.RasieCount=1 and (e.GameAction = 'raise' or e.GameAction='allin') and e.PlayerID!=f.PlayerID) as h
+	where g.GameID = h.GameID and g.GameStage = 'trun' and (g.GameAction = 'fold') and g.RasieCount=h.RasieCount+1 and g.PlayerID=h.cbetPlayer
+	group by g.clubID,g.BindType,g.playerID) as j
+	on i.ClubID = j.ClubID and i.BindType = j.BindType and i.PlayerID =j.PlayerID
+    </select>
+    <!-- 4008 - turn胜率 -->
+	<select id="findTurnTotalCbetDelayRate" parameterType="java.lang.String" resultMap="BaseResultMap" >   
+	select e.ClubID,e.BindType as BlindType,e.PlayerID,e.fCheckCount as Denominator,
+	if(f.tCbetCount is null,0,f.tCbetCount) Numerator,
+	format(if(f.tCbetCount is null,0,f.tCbetCount)/e.fCheckCount,2) KpiValue from 
+	(select a.ClubID,a.BindType,a.PlayerID,count(1) fCheckCount from
+	(select ClubID,BindType,PlayerID,GameID from v_game_action t  where GameStage = 'flop' and GameAction = 'check' and MyActionIndex =(select max(MyActionIndex) from v_game_action where GameID=t.GameID and PlayerID = t.PlayerID)
+	) as a,
+	(select ClubID,BindType,PlayerID,GameID from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+	and EndStage!='preflop' 
+	and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)
+	) as b
+	where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID
+	group by a.ClubID,a.BindType,a.PlayerID) as e left outer join
+	(select c.ClubID,c.BindType,c.PlayerID, count(1) tCbetCount from 
+	(select ClubID,BindType,PlayerID,GameID from v_game_action  where GameStage = 'turn' and (GameAction = 'bet' or GameAction ='betAllin'))
+	as c,
+	(select a.ClubID,a.BindType,a.PlayerID,a.GameID from
+	(select ClubID,BindType,PlayerID,GameID from v_game_action t where GameStage = 'flop' and GameAction = 'check' and MyActionIndex =(select max(MyActionIndex) from v_game_action where GameID=t.GameID and PlayerID = t.PlayerID)
+	) as a,
+	(select ClubID,BindType,PlayerID,GameID from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+	and EndStage!='preflop' 
+	and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)
+	) as b
+	where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID)  as d
+	where c.ClubID=d.ClubID and c.BindType=d.BindType and c.PlayerID = d.playerID and c.GameID = d.GameID
+	group by c.ClubID,c.BindType,c.PlayerID) as f
+	on e.ClubID = f.ClubID and e.BindType = f.BindType and e.PlayerID = f.PlayerID
+    </select>
+    <!-- 4009 - turn胜率 -->
+	<select id="findTurnPositionCbetDelayRate" parameterType="java.lang.String" resultMap="BaseResultMap" >   
+	select e.ClubID,e.BindType as BlindType,e.PlayerID,e.tCbetCount as Denominator,
+	if(f.tMPCbetCount is null,0,f.tMPCbetCount) Numerator,
+	format(if(f.tMPCbetCount is null,0,f.tMPCbetCount)/e.tCbetCount,2) KpiValue from 
+	(select c.ClubID,c.BindType,c.PlayerID, count(1) tCbetCount from 
+	(select ClubID,BindType,PlayerID,GameID from v_game_action  where GameStage = 'turn' and (GameAction = 'bet' or GameAction ='betAllin'))
+	as c,
+	(select a.ClubID,a.BindType,a.PlayerID,a.GameID from
+	(select ClubID,BindType,PlayerID,GameID from v_game_action t  where GameStage = 'flop' and GameAction = 'check' and MyActionIndex =(select max(MyActionIndex) from v_game_action where GameID=t.GameID and PlayerID = t.PlayerID)
+	) as a,
+	(select ClubID,BindType,PlayerID,GameID from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+	and EndStage!='preflop' 
+	and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)
+	) as b
+	where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID)  as d
+	where c.ClubID=d.ClubID and c.BindType=d.BindType and c.PlayerID = d.playerID and c.GameID = d.GameID
+	group by c.ClubID,c.BindType,c.PlayerID) as e left outer join
+	(select c.ClubID,c.BindType,c.PlayerID, count(1) tMPCbetCount from 
+	(select ClubID,BindType,PlayerID,GameID,PlayerPosition from v_game_action  where GameStage = 'turn' and (GameAction = 'bet' or GameAction ='betAllin'))
+	as c,
+	(select a.ClubID,a.BindType,a.PlayerID,a.GameID from
+	(select ClubID,BindType,PlayerID,GameID from v_game_action t  where GameStage = 'flop' and GameAction = 'check' and MyActionIndex =(select max(MyActionIndex) from v_game_action where GameID=t.GameID and PlayerID = t.PlayerID)
+	) as a,
+	(select ClubID,BindType,PlayerID,GameID from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+	and EndStage!='preflop' 
+	and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)
+	) as b
+	where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID)  as d
+	where c.ClubID=d.ClubID and c.BindType=d.BindType and c.PlayerID = d.playerID and c.GameID = d.GameID 
+	and c.PlayerPosition =(select max(playerPosition) from v_game_action where GameID = c.GameID and GameStage = 'turn')
+	group by c.ClubID,c.BindType,c.PlayerID) as f
+	on e.ClubID = f.ClubID and e.BindType = f.BindType and e.PlayerID = f.PlayerID
+    </select>
+    <!-- 4010 - turn胜率 -->
+	<select id="findTurnNoPositionCbetDelayRate" parameterType="java.lang.String" resultMap="BaseResultMap" >   
+	select e.ClubID,e.BindType as BlindType,e.PlayerID,e.tCbetCount as Denominator,
+	if(f.tEPCbetCount is null,0,f.tEPCbetCount) Numerator,
+	format(if(f.tEPCbetCount is null,0,f.tEPCbetCount)/e.tCbetCount,2) KpiValue from 
+	(select c.ClubID,c.BindType,c.PlayerID, count(1) tCbetCount from 
+	(select ClubID,BindType,PlayerID,GameID from v_game_action  where GameStage = 'turn' and (GameAction = 'bet' or GameAction ='betAllin'))
+	as c,
+	(select a.ClubID,a.BindType,a.PlayerID,a.GameID from
+	(select ClubID,BindType,PlayerID,GameID from v_game_action t  where GameStage = 'flop' and GameAction = 'check' and MyActionIndex =(select max(MyActionIndex) from v_game_action where GameID=t.GameID and PlayerID = t.PlayerID)
+	) as a,
+	(select ClubID,BindType,PlayerID,GameID from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+	and EndStage!='preflop' 
+	and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)
+	) as b
+	where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID)  as d
+	where c.ClubID=d.ClubID and c.BindType=d.BindType and c.PlayerID = d.playerID and c.GameID = d.GameID
+	group by c.ClubID,c.BindType,c.PlayerID) as e left outer join
+	(select c.ClubID,c.BindType,c.PlayerID, count(1) tEPCbetCount from 
+	(select ClubID,BindType,PlayerID,GameID,PlayerPosition from v_game_action  where GameStage = 'turn' and (GameAction = 'bet' or GameAction ='betAllin'))
+	as c,
+	(select a.ClubID,a.BindType,a.PlayerID,a.GameID from
+	(select ClubID,BindType,PlayerID,GameID from v_game_action t  where GameStage = 'flop' and GameAction = 'check' and MyActionIndex =(select max(MyActionIndex) from v_game_action where GameID=t.GameID and PlayerID = t.PlayerID)
+	) as a,
+	(select ClubID,BindType,PlayerID,GameID from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+	and EndStage!='preflop' 
+	and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)
+	) as b
+	where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID)  as d
+	where c.ClubID=d.ClubID and c.BindType=d.BindType and c.PlayerID = d.playerID and c.GameID = d.GameID 
+	<![CDATA[and c.PlayerPosition <(select max(playerPosition) ]]>
+	from v_game_action where GameID = c.GameID and GameStage = 'turn')
+	group by c.ClubID,c.BindType,c.PlayerID) as f
+	on e.ClubID = f.ClubID and e.BindType = f.BindType and e.PlayerID = f.PlayerID
+    </select>
+    <!-- 4011 - turn胜率 -->
+	<select id="findTurnTotalFoldCbetRate" parameterType="java.lang.String" resultMap="BaseResultMap" >   
+	select g.ClubID,g.BindType as BlindType,g.PlayerID,g.faceTCbetCount as Denominator,
+	if(h.faceTCbetActionCount is null,0,h.faceTCbetActionCount) Numerator,
+	format(if(h.faceTCbetActionCount is null,0,h.faceTCbetActionCount)/g.faceTCbetCount,2) KpiValue   
+	from 
+	(select e.ClubID,e.BindType,e.PlayerID,count(1) faceTCbetCount from v_game_action e,
+	(
+	select d.* from 
+	(select * from v_game_action  where GameStage = 'turn' and (GameAction = 'bet' or GameAction='betAllin')) as d ,
+	(select a.* from
+	(select * from v_game_action t  where GameStage = 'flop' and GameAction = 'bet'  
+	and (select count(1) from v_game_action where GameID = t.GameID  and GameStage = 'flop' and PlayerID = t.PlayerID and (GameAction ='fold' or GameAction='call'))=0
+	) as a,
+	(select * from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+	and EndStage!='preflop' 
+	and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)
+	) as b
+	where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID) as c
+	where  d.GameID = c.GameID and d.PlayerID=c.PlayerID ) as f
+	where e.GameID=f.GameID and e.PlayerID!=f.PlayerID and e.GameStage = 'turn' and (e.GameAction = 'call' or e.GameAction='fold' or e.GameAction='raise' or e.GameAction = 'allin')
+	and e.RasieCount=1
+	group by  e.ClubID,e.BindType,e.PlayerID) as g
+	left outer join 
+	(select e.ClubID,e.BindType,e.PlayerID,count(1) faceTCbetActionCount from v_game_action e,
+	(
+	select d.* from 
+	(select * from v_game_action  where GameStage = 'turn' and (GameAction = 'bet' or GameAction='betAllin')) as d ,
+	(select a.* from
+	(select * from v_game_action t  where GameStage = 'flop' and GameAction = 'bet'  
+	and (select count(1) from v_game_action where GameID = t.GameID  and GameStage = 'flop' and PlayerID = t.PlayerID and (GameAction ='fold' or GameAction='call'))=0
+	) as a,
+	(select * from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+	and EndStage!='preflop' 
+	and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)
+	) as b
+	where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID) as c
+	where  d.GameID = c.GameID and d.PlayerID=c.PlayerID ) as f
+	where e.GameID=f.GameID and e.PlayerID!=f.PlayerID and e.GameStage = 'turn' and e.GameAction='fold'
+	and e.RasieCount=1
+	group by  e.ClubID,e.BindType,e.PlayerID) as h
+	on g.ClubID = h.ClubID and g.BindType = h.BindType and g.PlayerID = h.PlayerID
+    </select>
+    <!-- 4012 - turn胜率 -->
+	<select id="findTurnPositionFoldCbetRate" parameterType="java.lang.String" resultMap="BaseResultMap" >   
+	select g.ClubID,g.BindType as BlindType,g.PlayerID,g.faceTCbetActionCount as Denominator,
+	if(h.postionFaceTCbetActionCount is null,0,h.postionFaceTCbetActionCount) Numerator,
+	format(if(h.postionFaceTCbetActionCount is null,0,h.postionFaceTCbetActionCount)/g.faceTCbetActionCount,2) KpiValue   
+	from 
+	(select e.ClubID,e.BindType,e.PlayerID,count(1) faceTCbetActionCount from v_game_action e,
+	(	
+	select d.* from 
+	(select * from v_game_action  where GameStage = 'turn' and (GameAction = 'bet' or GameAction='betAllin')) as d ,
+	(select a.* from
+	(select * from v_game_action t  where GameStage = 'flop' and GameAction = 'bet'  
+	and (select count(1) from v_game_action where GameID = t.GameID  and GameStage = 'flop' and PlayerID = t.PlayerID and (GameAction ='fold' or GameAction='call'))=0
+	) as a,
+	(select * from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+	and EndStage!='preflop' 
+	and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)
+	) as b
+	where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID) as c
+	where  d.GameID = c.GameID and d.PlayerID=c.PlayerID ) as f
+	where e.GameID=f.GameID and e.PlayerID!=f.PlayerID and e.GameStage = 'turn' and e.GameAction='fold' and e.RasieCount=1
+	group by  e.ClubID,e.BindType,e.PlayerID) as g
+	left outer join 
+	(select e.ClubID,e.BindType,e.PlayerID,count(1) postionFaceTCbetActionCount from v_game_action e,
+	(
+	select d.* from 
+	(select * from v_game_action  where GameStage = 'turn' and (GameAction = 'bet' or GameAction='betAllin')) as d ,
+	(select a.* from
+	(select * from v_game_action t  where GameStage = 'flop' and GameAction = 'bet'  
+	and (select count(1) from v_game_action where GameID = t.GameID  and GameStage = 'flop' and PlayerID = t.PlayerID and (GameAction ='fold' or GameAction='call'))=0
+	) as a,
+	(select * from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+	and EndStage!='preflop' 
+	and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)
+	) as b
+	where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID) as c
+	where  d.GameID = c.GameID and d.PlayerID=c.PlayerID ) as f
+	where e.GameID=f.GameID and e.PlayerID!=f.PlayerID and e.GameStage = 'turn' and e.GameAction='fold' and e.RasieCount=1
+	<![CDATA[and e.PlayerPosition >f.PlayerPosition]]>
+	group by  e.ClubID,e.BindType,e.PlayerID) as h
+	on g.ClubID = h.ClubID and g.BindType = h.BindType and g.PlayerID = h.PlayerID
+    </select>
+    <!-- 4013 - turn胜率 -->
+	<select id="findTurnNoPositionFoldCbetRate" parameterType="java.lang.String" resultMap="BaseResultMap" >   
+	select g.ClubID,g.BindType as BlindType,g.PlayerID,g.faceTCbetActionCount as Denominator,
+	if(h.postionFaceTCbetActionCount is null,0,h.postionFaceTCbetActionCount) Numerator,
+	format(if(h.postionFaceTCbetActionCount is null,0,h.postionFaceTCbetActionCount)/g.faceTCbetActionCount,2) KpiValue   
+	from 
+	(select e.ClubID,e.BindType,e.PlayerID,count(1) faceTCbetActionCount from v_game_action e,
+	(
+	select d.* from 
+	(select * from v_game_action  where GameStage = 'turn' and (GameAction = 'bet' or GameAction='betAllin')) as d ,
+	(select a.* from
+	(select * from v_game_action t  where GameStage = 'flop' and GameAction = 'bet'  
+	and (select count(1) from v_game_action where GameID = t.GameID  and GameStage = 'flop' and PlayerID = t.PlayerID and (GameAction ='fold' or GameAction='call'))=0
+	) as a,
+	(select * from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+	and EndStage!='preflop' 
+	and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)
+	) as b
+	where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID) as c
+	where  d.GameID = c.GameID and d.PlayerID=c.PlayerID ) as f
+	where e.GameID=f.GameID and e.PlayerID!=f.PlayerID and e.GameStage = 'turn' and e.GameAction='fold' and e.RasieCount=1
+	group by  e.ClubID,e.BindType,e.PlayerID) as g
+	left outer join 
+	(select e.ClubID,e.BindType,e.PlayerID,count(1) postionFaceTCbetActionCount from v_game_action e,
+	(
+	select d.* from 
+	(select * from v_game_action  where GameStage = 'turn' and (GameAction = 'bet' or GameAction='betAllin')) as d ,
+	(select a.* from
+	(select * from v_game_action t  where GameStage = 'flop' and GameAction = 'bet'  
+	and (select count(1) from v_game_action where GameID = t.GameID  and GameStage = 'flop' and PlayerID = t.PlayerID and (GameAction ='fold' or GameAction='call'))=0
+	) as a,
+	(select * from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+	and EndStage!='preflop' 
+	and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)
+	) as b
+	where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID) as c
+	where  d.GameID = c.GameID and d.PlayerID=c.PlayerID ) as f
+	where e.GameID=f.GameID and e.PlayerID!=f.PlayerID and e.GameStage = 'turn' and e.GameAction='fold' and e.RasieCount=1
+	<![CDATA[and e.PlayerPosition < f.PlayerPosition]]>
+	group by  e.ClubID,e.BindType,e.PlayerID) as h
+	on g.ClubID = h.ClubID and g.BindType = h.BindType and g.PlayerID = h.PlayerID
+    </select>
+    <!-- 4014 - turn胜率 -->
+	<select id="findTurnTotalCallCbetRate" parameterType="java.lang.String" resultMap="BaseResultMap" >   
+	select g.ClubID,g.BindType as BlindType,g.PlayerID,g.faceTCbetCount as Denominator,
+	if(h.faceTCbetActionCount is null,0,h.faceTCbetActionCount) Numerator,
+	format(if(h.faceTCbetActionCount is null,0,h.faceTCbetActionCount)/g.faceTCbetCount,2) KpiValue   
+	from 
+	(select e.ClubID,e.BindType,e.PlayerID,count(1) faceTCbetCount from v_game_action e,
+	(
+	select d.* from 
+	(select * from v_game_action  where GameStage = 'turn' and (GameAction = 'bet' or GameAction='betAllin')) as d ,
+	(select a.* from
+	(select * from v_game_action t  where GameStage = 'flop' and GameAction = 'bet'  
+	and (select count(1) from v_game_action where GameID = t.GameID  and GameStage = 'flop' and PlayerID = t.PlayerID and (GameAction ='fold' or GameAction='call'))=0
+	) as a,
+	(select * from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+	and EndStage!='preflop' 
+	and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)
+	) as b
+	where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID) as c
+	where  d.GameID = c.GameID and d.PlayerID=c.PlayerID ) as f
+	where e.GameID=f.GameID and e.PlayerID!=f.PlayerID and e.GameStage = 'turn' and (e.GameAction = 'call' or e.GameAction='fold' or e.GameAction='raise' or e.GameAction = 'allin')
+	and e.RasieCount=1
+	group by  e.ClubID,e.BindType,e.PlayerID) as g
+	left outer join 
+	(select e.ClubID,e.BindType,e.PlayerID,count(1) faceTCbetActionCount from v_game_action e,
+	(
+	select d.* from 
+	(select * from v_game_action  where GameStage = 'turn' and (GameAction = 'bet' or GameAction='betAllin')) as d ,
+	(select a.* from
+	(select * from v_game_action t  where GameStage = 'flop' and GameAction = 'bet'  
+	and (select count(1) from v_game_action where GameID = t.GameID  and GameStage = 'flop' and PlayerID = t.PlayerID and (GameAction ='fold' or GameAction='call'))=0
+	) as a,
+	(select * from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+	and EndStage!='preflop' 
+	and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)
+	) as b
+	where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID) as c
+	where  d.GameID = c.GameID and d.PlayerID=c.PlayerID ) as f
+	where e.GameID=f.GameID and e.PlayerID!=f.PlayerID and e.GameStage = 'turn' and e.GameAction='call'
+	and e.RasieCount=1
+	group by  e.ClubID,e.BindType,e.PlayerID) as h
+	on g.ClubID = h.ClubID and g.BindType = h.BindType and g.PlayerID = h.PlayerID
+    </select>
+    <!-- 4015 - turn胜率 -->
+	<select id="findTurnPositionCallCbetRate" parameterType="java.lang.String" resultMap="BaseResultMap" >   
+	select g.ClubID,g.BindType as BlindType,g.PlayerID,g.faceTCbetActionCount as Denominator,
+	if(h.postionFaceTCbetActionCount is null,0,h.postionFaceTCbetActionCount) Numerator,
+	format(if(h.postionFaceTCbetActionCount is null,0,h.postionFaceTCbetActionCount)/g.faceTCbetActionCount,2) KpiValue   
+	from 
+	(select e.ClubID,e.BindType,e.PlayerID,count(1) faceTCbetActionCount from v_game_action e,
+	(
+	select d.* from 
+	(select * from v_game_action  where GameStage = 'turn' and (GameAction = 'bet' or GameAction='betAllin')) as d ,
+	(select a.* from
+	(select * from v_game_action t  where GameStage = 'flop' and GameAction = 'bet'  
+	and (select count(1) from v_game_action where GameID = t.GameID  and GameStage = 'flop' and PlayerID = t.PlayerID and (GameAction ='fold' or GameAction='call'))=0
+	) as a,
+	(select * from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+	and EndStage!='preflop' 
+	and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)
+	) as b
+	where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID) as c
+	where  d.GameID = c.GameID and d.PlayerID=c.PlayerID ) as f
+	where e.GameID=f.GameID and e.PlayerID!=f.PlayerID and e.GameStage = 'turn' and e.GameAction='call' and e.RasieCount=1
+	group by  e.ClubID,e.BindType,e.PlayerID) as g
+	left outer join 
+	(select e.ClubID,e.BindType,e.PlayerID,count(1) postionFaceTCbetActionCount from v_game_action e,
+	(
+	select d.* from 
+	(select * from v_game_action  where GameStage = 'turn' and (GameAction = 'bet' or GameAction='betAllin')) as d ,
+	(select a.* from
+	(select * from v_game_action t  where GameStage = 'flop' and GameAction = 'bet'  
+	and (select count(1) from v_game_action where GameID = t.GameID  and GameStage = 'flop' and PlayerID = t.PlayerID and (GameAction ='fold' or GameAction='call'))=0
+	) as a,
+	(select * from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+	and EndStage!='preflop' 
+	and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)
+	) as b
+	where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID) as c
+	where  d.GameID = c.GameID and d.PlayerID=c.PlayerID ) as f
+	where e.GameID=f.GameID and e.PlayerID!=f.PlayerID and e.GameStage = 'turn' and e.GameAction='call' and e.RasieCount=1
+	<![CDATA[and e.PlayerPosition >f.PlayerPosition]]>
+	group by  e.ClubID,e.BindType,e.PlayerID) as h
+	on g.ClubID = h.ClubID and g.BindType = h.BindType and g.PlayerID = h.PlayerID
+    </select>
+    <!-- 4016 - turn胜率 -->
+	<select id="findTurnNoPositionCallCbetRate" parameterType="java.lang.String" resultMap="BaseResultMap" >   
+	select g.ClubID,g.BindType as BlindType,g.PlayerID,g.faceTCbetActionCount as Denominator,
+	if(h.postionFaceTCbetActionCount is null,0,h.postionFaceTCbetActionCount) Numerator,
+	format(if(h.postionFaceTCbetActionCount is null,0,h.postionFaceTCbetActionCount)/g.faceTCbetActionCount,2) KpiValue   
+	from 
+	(select e.ClubID,e.BindType,e.PlayerID,count(1) faceTCbetActionCount from v_game_action e,
+	(
+	select d.* from 
+	(select * from v_game_action  where GameStage = 'turn' and (GameAction = 'bet' or GameAction='betAllin')) as d ,
+	(select a.* from
+	(select * from v_game_action t  where GameStage = 'flop' and GameAction = 'bet'  
+	and (select count(1) from v_game_action where GameID = t.GameID  and GameStage = 'flop' and PlayerID = t.PlayerID and (GameAction ='fold' or GameAction='call'))=0
+	) as a,
+	(select * from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+	and EndStage!='preflop' 
+	and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)
+	) as b
+	where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID) as c
+	where  d.GameID = c.GameID and d.PlayerID=c.PlayerID ) as f
+	where e.GameID=f.GameID and e.PlayerID!=f.PlayerID and e.GameStage = 'turn' and e.GameAction='call' and e.RasieCount=1
+	group by  e.ClubID,e.BindType,e.PlayerID) as g
+	left outer join 
+	(select e.ClubID,e.BindType,e.PlayerID,count(1) postionFaceTCbetActionCount from v_game_action e,
+	(
+	select d.* from 
+	(select * from v_game_action  where GameStage = 'turn' and (GameAction = 'bet' or GameAction='betAllin')) as d ,
+	(select a.* from
+	(select * from v_game_action t  where GameStage = 'flop' and GameAction = 'bet'  
+	and (select count(1) from v_game_action where GameID = t.GameID  and GameStage = 'flop' and PlayerID = t.PlayerID and (GameAction ='fold' or GameAction='call'))=0
+	) as a,
+	(select * from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+	and EndStage!='preflop' 
+	and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)
+	) as b
+	where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID) as c
+	where  d.GameID = c.GameID and d.PlayerID=c.PlayerID ) as f
+	where e.GameID=f.GameID and e.PlayerID!=f.PlayerID and e.GameStage = 'turn' and e.GameAction='call' and e.RasieCount=1
+	<![CDATA[and e.PlayerPosition < f.PlayerPosition]]>
+	group by  e.ClubID,e.BindType,e.PlayerID) as h
+	on g.ClubID = h.ClubID and g.BindType = h.BindType and g.PlayerID = h.PlayerID
+    </select>
+    <!-- 4017 - turn胜率 -->
+	<select id="findTurnTotalRaiseCbetRate" parameterType="java.lang.String" resultMap="BaseResultMap" >   
+	select g.ClubID,g.BindType as BlindType,g.PlayerID,g.faceTCbetCount as Denominator,
+	if(h.faceTCbetActionCount is null,0,h.faceTCbetActionCount) Numerator,
+	format(if(h.faceTCbetActionCount is null,0,h.faceTCbetActionCount)/g.faceTCbetCount,2) KpiValue   
+	from 
+	(select e.ClubID,e.BindType,e.PlayerID,count(1) faceTCbetCount from v_game_action e,
+	(
+	select d.* from 
+	(select * from v_game_action  where GameStage = 'turn' and (GameAction = 'bet' or GameAction='betAllin')) as d ,
+	(select a.* from
+	(select * from v_game_action t  where GameStage = 'flop' and GameAction = 'bet'  
+	and (select count(1) from v_game_action where GameID = t.GameID  and GameStage = 'flop' and PlayerID = t.PlayerID and (GameAction ='fold' or GameAction='call'))=0
+	) as a,
+	(select * from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+	and EndStage!='preflop' 
+	and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)
+	) as b
+	where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID) as c
+	where  d.GameID = c.GameID and d.PlayerID=c.PlayerID ) as f
+	where e.GameID=f.GameID and e.PlayerID!=f.PlayerID and e.GameStage = 'turn' and (e.GameAction = 'call' or e.GameAction='fold' or e.GameAction='raise' or e.GameAction = 'allin')
+	and e.RasieCount=1
+	group by  e.ClubID,e.BindType,e.PlayerID) as g
+	left outer join 
+	(select e.ClubID,e.BindType,e.PlayerID,count(1) faceTCbetActionCount from v_game_action e,
+	(
+	select d.* from 
+	(select * from v_game_action  where GameStage = 'turn' and (GameAction = 'bet' or GameAction='betAllin')) as d ,
+	(select a.* from
+	(select * from v_game_action t  where GameStage = 'flop' and GameAction = 'bet'  
+	and (select count(1) from v_game_action where GameID = t.GameID  and GameStage = 'flop' and PlayerID = t.PlayerID and (GameAction ='fold' or GameAction='call'))=0
+	) as a,
+	(select * from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+	and EndStage!='preflop' 
+	and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)
+	) as b
+	where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID) as c
+	where  d.GameID = c.GameID and d.PlayerID=c.PlayerID ) as f
+	where e.GameID=f.GameID and e.PlayerID!=f.PlayerID and e.GameStage = 'turn' and (e.GameAction='raise' or e.GameAction = 'allin')
+	and e.RasieCount=1
+	group by  e.ClubID,e.BindType,e.PlayerID) as h
+	on g.ClubID = h.ClubID and g.BindType = h.BindType and g.PlayerID = h.PlayerID
+    </select>
+    <!-- 4018 - turn胜率 -->
+	<select id="findTurnPositionRaiseCbetRate" parameterType="java.lang.String" resultMap="BaseResultMap" >   
+	select g.ClubID,g.BindType as BlindType,g.PlayerID,g.faceTCbetActionCount as Denominator,
+	if(h.postionFaceTCbetActionCount is null,0,h.postionFaceTCbetActionCount) Numerator,
+	format(if(h.postionFaceTCbetActionCount is null,0,h.postionFaceTCbetActionCount)/g.faceTCbetActionCount,2) KpiValue   
+	from 
+	(select e.ClubID,e.BindType,e.PlayerID,count(1) faceTCbetActionCount from v_game_action e,
+	(
+	select d.* from 
+	(select * from v_game_action  where GameStage = 'turn' and (GameAction = 'bet' or GameAction='betAllin')) as d ,
+	(select a.* from
+	(select * from v_game_action t  where GameStage = 'flop' and GameAction = 'bet'  
+	and (select count(1) from v_game_action where GameID = t.GameID  and GameStage = 'flop' and PlayerID = t.PlayerID and (GameAction ='fold' or GameAction='call'))=0
+	) as a,
+	(select * from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+	and EndStage!='preflop' 
+	and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)
+	) as b
+	where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID) as c
+	where  d.GameID = c.GameID and d.PlayerID=c.PlayerID ) as f
+	where e.GameID=f.GameID and e.PlayerID!=f.PlayerID and e.GameStage = 'turn' and (e.GameAction='raise' or e.GameAction = 'allin') and e.RasieCount=1
+	group by  e.ClubID,e.BindType,e.PlayerID) as g
+	left outer join 
+	(select e.ClubID,e.BindType,e.PlayerID,count(1) postionFaceTCbetActionCount from v_game_action e,
+	(
+	select d.* from 
+	(select * from v_game_action  where GameStage = 'turn' and (GameAction = 'bet' or GameAction='betAllin')) as d ,
+	(select a.* from
+	(select * from v_game_action t  where GameStage = 'flop' and GameAction = 'bet'  
+	and (select count(1) from v_game_action where GameID = t.GameID  and GameStage = 'flop' and PlayerID = t.PlayerID and (GameAction ='fold' or GameAction='call'))=0
+	) as a,
+	(select * from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+	and EndStage!='preflop' 
+	and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)
+	) as b
+	where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID) as c
+	where  d.GameID = c.GameID and d.PlayerID=c.PlayerID ) as f
+	where e.GameID=f.GameID and e.PlayerID!=f.PlayerID and e.GameStage = 'turn' and (e.GameAction='raise' or e.GameAction = 'allin') and e.RasieCount=1
+	<![CDATA[and e.PlayerPosition >f.PlayerPosition]]>
+	group by  e.ClubID,e.BindType,e.PlayerID) as h
+	on g.ClubID = h.ClubID and g.BindType = h.BindType and g.PlayerID = h.PlayerID
+    </select>
+    <!-- 4019 - turn胜率 -->
+	<select id="findTurnNoPositionRaiseCbetRate" parameterType="java.lang.String" resultMap="BaseResultMap" >   
+	select g.ClubID,g.BindType as BlindType,g.PlayerID,g.faceTCbetActionCount as Denominator,
+	if(h.postionFaceTCbetActionCount is null,0,h.postionFaceTCbetActionCount) Numerator,
+	format(if(h.postionFaceTCbetActionCount is null,0,h.postionFaceTCbetActionCount)/g.faceTCbetActionCount,2) KpiValue   
+	from 
+	(select e.ClubID,e.BindType,e.PlayerID,count(1) faceTCbetActionCount from v_game_action e,
+	(
+	select d.* from 
+	(select * from v_game_action  where GameStage = 'turn' and (GameAction = 'bet' or GameAction='betAllin')) as d ,
+	(select a.* from
+	(select * from v_game_action t  where GameStage = 'flop' and GameAction = 'bet'  
+	and (select count(1) from v_game_action where GameID = t.GameID  and GameStage = 'flop' and PlayerID = t.PlayerID and (GameAction ='fold' or GameAction='call'))=0
+	) as a,
+	(select * from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+	and EndStage!='preflop' 
+	and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)
+	) as b
+	where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID) as c
+	where  d.GameID = c.GameID and d.PlayerID=c.PlayerID ) as f
+	where e.GameID=f.GameID and e.PlayerID!=f.PlayerID and e.GameStage = 'turn' and (e.GameAction='raise' or e.GameAction = 'allin') and e.RasieCount=1
+	group by  e.ClubID,e.BindType,e.PlayerID) as g
+	left outer join 
+	(select e.ClubID,e.BindType,e.PlayerID,count(1) postionFaceTCbetActionCount from v_game_action e,
+	(
+	select d.* from 
+	(select * from v_game_action  where GameStage = 'turn' and (GameAction = 'bet' or GameAction='betAllin')) as d ,
+	(select a.* from
+	(select * from v_game_action t  where GameStage = 'flop' and GameAction = 'bet'  
+	and (select count(1) from v_game_action where GameID = t.GameID  and GameStage = 'flop' and PlayerID = t.PlayerID and (GameAction ='fold' or GameAction='call'))=0
+	) as a,
+	(select * from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+	and EndStage!='preflop' 
+	and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)
+	) as b
+	where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID) as c
+	where  d.GameID = c.GameID and d.PlayerID=c.PlayerID ) as f
+	where e.GameID=f.GameID and e.PlayerID!=f.PlayerID and e.GameStage = 'turn' and (e.GameAction='raise' or e.GameAction = 'allin') and e.RasieCount=1
+	<![CDATA[and e.PlayerPosition < f.PlayerPosition]]>
+	group by  e.ClubID,e.BindType,e.PlayerID) as h
+	on g.ClubID = h.ClubID and g.BindType = h.BindType and g.PlayerID = h.PlayerID
+    </select>
+    <!-- 4020 - turn胜率 -->
+	<select id="findTurnWithDonkFoldRate" parameterType="java.lang.String" resultMap="BaseResultMap" >   
+	select g.ClubID,g.BindType as BlindType,g.PlayerID,g.faceDonkCount as Denominator,
+	if(h.donkActionCount is null,0,h.donkActionCount) Numerator, 
+	format(if(h.donkActionCount is null,0,h.donkActionCount)/g.faceDonkCount,2) KpiValue from
+	(select d.ClubID,d.BindType,d.PlayerID,count(1) faceDonkCount from
+	(select * from v_game_action  where GameStage = 'turn' and  (GameAction = 'fold' or GameAction = 'call' or GameAction = 'raise' or GameAction = 'allin')
+	 and MyActionIndex = 1 and RasieCount = 1) as d ,
+	(select a.* from
+	(select * from v_game_action t  where GameStage = 'flop' and GameAction = 'bet'  
+	and (select count(1) from v_game_action where GameID = t.GameID  and GameStage = 'flop' and PlayerID = t.PlayerID and (GameAction ='fold' or GameAction='call'))=0
+	) as a,
+	(select * from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+	and EndStage!='preflop' 
+	and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)
+	) as b
+	where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID) as c
+	where  d.GameID = c.GameID and d.PlayerID=c.PlayerID
+	 group by d.GameID,d.BindType,d.PlayerID) as g
+	left outer join 
+	(select d.ClubID,d.BindType,d.PlayerID,count(1) donkActionCount from
+	(select * from v_game_action  where GameStage = 'turn' and  (GameAction = 'fold')
+	 and MyActionIndex = 1 and RasieCount = 1) as d ,
+	(select a.* from
+	(select * from v_game_action t  where GameStage = 'flop' and GameAction = 'bet'  
+	and (select count(1) from v_game_action where GameID = t.GameID  and GameStage = 'flop' and PlayerID = t.PlayerID and (GameAction ='fold' or GameAction='call'))=0
+	) as a,
+	(select * from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+	and EndStage!='preflop' 
+	and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)
+	) as b
+	where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID) as c
+	where  d.GameID = c.GameID and d.PlayerID=c.PlayerID
+	 group by d.GameID,d.BindType,d.PlayerID) as h
+	on g.ClubID = h.ClubID and g.BindType = h.BindType and g.PlayerID = h.PlayerID
+    </select>
+    <!-- 4021 - turn胜率 -->
+	<select id="findTurnWithDonkCallRate" parameterType="java.lang.String" resultMap="BaseResultMap" >   
+	select g.ClubID,g.BindType as BlindType,g.PlayerID,g.faceDonkCount as Denominator,
+	if(h.donkActionCount is null,0,h.donkActionCount) Numerator, 
+	format(if(h.donkActionCount is null,0,h.donkActionCount)/g.faceDonkCount,2) KpiValue from
+	(select d.ClubID,d.BindType,d.PlayerID,count(1) faceDonkCount from
+	(select * from v_game_action  where GameStage = 'turn' and  (GameAction = 'fold' or GameAction = 'call' or GameAction = 'raise' or GameAction = 'allin')
+	 and MyActionIndex = 1 and RasieCount = 1) as d ,
+	(select a.* from
+	(select * from v_game_action t  where GameStage = 'flop' and GameAction = 'bet'  
+	and (select count(1) from v_game_action where GameID = t.GameID  and GameStage = 'flop' and PlayerID = t.PlayerID and (GameAction ='fold' or GameAction='call'))=0
+	) as a,
+	(select * from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+	and EndStage!='preflop' 
+	and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)
+	) as b
+	where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID) as c
+	where  d.GameID = c.GameID and d.PlayerID=c.PlayerID
+	 group by d.GameID,d.BindType,d.PlayerID) as g
+	left outer join 
+	(select d.ClubID,d.BindType,d.PlayerID,count(1) donkActionCount from
+	(select * from v_game_action  where GameStage = 'turn' and  (GameAction = 'call')
+	 and MyActionIndex = 1 and RasieCount = 1) as d ,
+	(select a.* from
+	(select * from v_game_action t  where GameStage = 'flop' and GameAction = 'bet'  
+	and (select count(1) from v_game_action where GameID = t.GameID  and GameStage = 'flop' and PlayerID = t.PlayerID and (GameAction ='fold' or GameAction='call'))=0
+	) as a,
+	(select * from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+	and EndStage!='preflop' 
+	and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)
+	) as b
+	where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID) as c
+	where  d.GameID = c.GameID and d.PlayerID=c.PlayerID
+	 group by d.GameID,d.BindType,d.PlayerID) as h
+	on g.ClubID = h.ClubID and g.BindType = h.BindType and g.PlayerID = h.PlayerID
+    </select>
+    <!-- 4022 - turn胜率 -->
+	<select id="findTurnWithDonkRaiseRate" parameterType="java.lang.String" resultMap="BaseResultMap" >   
+	select g.ClubID,g.BindType as BlindType,g.PlayerID,g.faceDonkCount as Denominator,
+	if(h.donkActionCount is null,0,h.donkActionCount) Numerator, 
+	format(if(h.donkActionCount is null,0,h.donkActionCount)/g.faceDonkCount,2) KpiValue from
+	(select d.ClubID,d.BindType,d.PlayerID,count(1) faceDonkCount from
+	(select * from v_game_action  where GameStage = 'turn' and  (GameAction = 'fold' or GameAction = 'call' or GameAction = 'raise' or GameAction = 'allin')
+	 and MyActionIndex = 1 and RasieCount = 1) as d ,
+	(select a.* from
+	(select * from v_game_action t  where GameStage = 'flop' and GameAction = 'bet'  
+	and (select count(1) from v_game_action where GameID = t.GameID  and GameStage = 'flop' and PlayerID = t.PlayerID and (GameAction ='fold' or GameAction='call'))=0
+	) as a,
+	(select * from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+	and EndStage!='preflop' 
+	and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)
+	) as b
+	where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID) as c
+	where  d.GameID = c.GameID and d.PlayerID=c.PlayerID
+	 group by d.GameID,d.BindType,d.PlayerID) as g
+	left outer join 
+	(select d.ClubID,d.BindType,d.PlayerID,count(1) donkActionCount from
+	(select * from v_game_action  where GameStage = 'turn' and  ( GameAction = 'raise' or GameAction = 'allin')
+	 and MyActionIndex = 1 and RasieCount = 1) as d ,
+	(select a.* from
+	(select * from v_game_action t  where GameStage = 'flop' and GameAction = 'bet'  
+	and (select count(1) from v_game_action where GameID = t.GameID  and GameStage = 'flop' and PlayerID = t.PlayerID and (GameAction ='fold' or GameAction='call'))=0
+	) as a,
+	(select * from v_game_action f where GameStage = 'preflop' and (GameAction = 'bet' or GameAction = 'raise' or GameAction = 'allin')
+	and EndStage!='preflop' 
+	and rasieCount+1 = (select max(rasieCount) from v_game_action where GameStage='preflop' and GameID = f.GameID)
+	) as b
+	where a.ClubID=b.ClubID and a.BindType=b.BindType and a.PlayerID = b.playerID and a.GameID = b.GameID) as c
+	where  d.GameID = c.GameID and d.PlayerID=c.PlayerID
+	 group by d.GameID,d.BindType,d.PlayerID) as h
+	on g.ClubID = h.ClubID and g.BindType = h.BindType and g.PlayerID = h.PlayerID
+    </select>
+    <!-- 4023 -->
+	<select id="findTurnTotalLimpInPotBetRate" parameterType="java.lang.String" resultMap="BaseResultMap" >   
+	select c.ClubID,c.BindType as BlindType,c.PlayerID,c.limpCount as Denominator,
+	if(d.limpBetCount is null, 0,d.limpBetCount) Numerator,
+	format(if(d.limpBetCount is null, 0,d.limpBetCount)/c.limpCount,2) KpiValue
+	from (select playerID,ClubID,BindType, count(distinct(gameid)) limpCount from v_game_action j where GameStage = 'preflop'
+	and  GameAction = 'call'  and RasieCount=0 and GameID not in (select gameID from v_game_action where PlayerID=j.PlayerID and GameStage = 'preflop'
+	and  (GameAction ='raise' or GameAction='call' or GameAction = 'allin' or GameAction='fold') and ActionIndex> PlayerCount+2)
+	and (select count(GameAction) from v_game_action where GameID = j.GameID and PlayerID = j.PlayerID 
+	<![CDATA[and GameStage='turn')>0]]>
+	group by ClubID,BindType,PlayerID) as c left outer join 
+	(select a.ClubID,a.BindType,a.PlayerID, count(1) limpBetCount from v_game_action a , 
+	(select playerID,ClubID,BindType, gameid from v_game_action j where GameStage = 'preflop'
+	and  GameAction = 'call'  and RasieCount=0 and GameID not in (select gameID from v_game_action where PlayerID=j.PlayerID and GameStage = 'preflop'
+	and  (GameAction ='raise' or GameAction='call' or GameAction = 'allin' or GameAction='fold')and ActionIndex> PlayerCount+2) 
+	and (select count(GameAction) from v_game_action where GameID = j.GameID and PlayerID = j.PlayerID 
+	<![CDATA[and GameStage='turn')>0]]>
+	) b where  a.GameStage='turn' and (a.GameAction = 'bet' or a.GameAction='betAllin') and a.ClubID = b.ClubID and a.BindType = b.BindType and 
+	a.PlayerID = b.PlayerID and a.GameID = b.GameID
+	group by  a.ClubID,a.BindType,a.PlayerID) as d
+	on c.ClubID = d.ClubID and c.BindType = d.BindType and c.PlayerID = d.PlayerID
+    </select>
+    <!-- 4024-4029 -->
+	<select id="findTurnLimpInPotBetRate" parameterType="java.lang.String" resultMap="BaseResultMap" >   
+	select c.ClubID,c.BindType as BlindType,c.PlayerID,c.limpBetCount as Denominator,
+	if(d.positionLimpBetCount is null, 0,d.positionLimpBetCount) Numerator,
+	format(if(d.positionLimpBetCount is null, 0,d.positionLimpBetCount)/c.limpBetCount,2) KpiValue
+	from (select a.ClubID,a.BindType,a.PlayerID, count(1) limpBetCount from v_game_action a , 
+	(select playerID,ClubID,BindType, gameid from v_game_action j where GameStage = 'preflop'
+	and  GameAction = 'call'  and RasieCount=0 and GameID not in (select gameID from v_game_action where PlayerID=j.PlayerID and GameStage = 'preflop'
+	and  (GameAction ='raise' or GameAction='call' or GameAction = 'allin' or GameAction='fold')
+	<![CDATA[and ActionIndex > PlayerCount+2)]]> 
+	and (select count(GameAction) from v_game_action where GameID = j.GameID and PlayerID = j.PlayerID 
+	<![CDATA[and GameStage='turn')>0]]>
+	) b where  a.GameStage='turn' and (a.GameAction = 'bet' or a.GameAction='betAllin') and a.ClubID = b.ClubID and a.BindType = b.BindType and 
+	a.PlayerID = b.PlayerID and a.GameID = b.GameID
+	group by  a.ClubID,a.BindType,a.PlayerID) as c left outer join 
+	(select a.ClubID,a.BindType,a.PlayerID,a.PositionName , count(1) positionLimpBetCount from v_game_action a , 
+	(select playerID,ClubID,BindType, gameid from v_game_action j where GameStage = 'preflop'
+	and  GameAction = 'call'  and RasieCount=0 and GameID not in (select gameID from v_game_action where PlayerID=j.PlayerID and GameStage = 'preflop'
+	and  (GameAction ='raise' or GameAction='call' or GameAction = 'allin' or GameAction='fold')
+	<![CDATA[and ActionIndex > PlayerCount+2) ]]>
+	and (select count(GameAction) from v_game_action where GameID = j.GameID  and PlayerID = j.PlayerID 
+	<![CDATA[and GameStage='turn')>0]]>
+	) b where  a.GameStage='turn'  and (a.GameAction = 'bet' or a.GameAction='betAllin') 
+	and a.PositionName=#{position,jdbcType=VARCHAR} 
+	and a.ClubID = b.ClubID and a.BindType = b.BindType and 
+	a.PlayerID = b.PlayerID and a.GameID = b.GameID 
+	group by  a.ClubID,a.BindType,a.PlayerID,a.PositionName) as d
+	on c.ClubID = d.ClubID and c.BindType = d.BindType and c.PlayerID = d.PlayerID
+    </select>
+    <!-- 4030 -->
+	<select id="findTurnTotalLimpInPotCallRate" parameterType="java.lang.String" resultMap="BaseResultMap" >   
+	select c.ClubID,c.BindType as BlindType,c.PlayerID,c.limpCount as Denominator,
+	if(d.limpBetCount is null, 0,d.limpBetCount) Numerator,
+	format(if(d.limpBetCount is null, 0,d.limpBetCount)/c.limpCount,2) KpiValue
+	from (select playerID,ClubID,BindType, count(distinct(gameid)) limpCount from v_game_action j where GameStage = 'preflop'
+	and  GameAction = 'call'  and RasieCount=0 and GameID not in (select gameID from v_game_action where PlayerID=j.PlayerID and GameStage = 'preflop'
+	and  (GameAction ='raise' or GameAction='call' or GameAction = 'allin' or GameAction='fold') 
+	<![CDATA[and ActionIndex> PlayerCount+2)]]>
+	and (select count(GameAction) from v_game_action where GameID = j.GameID and PlayerID = j.PlayerID 
+	<![CDATA[and GameStage='turn')>0]]>
+	group by ClubID,BindType,PlayerID) as c left outer join 
+	(select a.ClubID,a.BindType,a.PlayerID, count(1) limpBetCount from v_game_action a , 
+	(select playerID,ClubID,BindType, gameid from v_game_action j where GameStage = 'preflop'
+	and  GameAction = 'call'  and RasieCount=0 and GameID not in (select gameID from v_game_action where PlayerID=j.PlayerID and GameStage = 'preflop'
+	and  (GameAction ='raise' or GameAction='call' or GameAction = 'allin' or GameAction='fold')
+	<![CDATA[and ActionIndex> PlayerCount+2)]]> 
+	and (select count(GameAction) from v_game_action where GameID = j.GameID and PlayerID = j.PlayerID 
+	<![CDATA[and GameStage='turn')>0]]>
+	) b where  a.GameStage='turn' and (a.GameAction = 'call') and a.MyActionIndex=1 and a.ClubID = b.ClubID and a.BindType = b.BindType and 
+	a.PlayerID = b.PlayerID and a.GameID = b.GameID
+	group by  a.ClubID,a.BindType,a.PlayerID) as d
+	on c.ClubID = d.ClubID and c.BindType = d.BindType and c.PlayerID = d.PlayerID
+    </select>
+    <!-- 4031-4035 -->
+	<select id="findTurnLimpInPotCallRate" parameterType="java.lang.String" resultMap="BaseResultMap" >   
+	select c.ClubID,c.BindType as BlindType,c.PlayerID,c.limpBetCount as Denominator,
+	if(d.positionLimpBetCount is null, 0,d.positionLimpBetCount) Numerator,
+	format(if(d.positionLimpBetCount is null, 0,d.positionLimpBetCount)/c.limpBetCount,2) KpiValue
+	from (select a.ClubID,a.BindType,a.PlayerID, count(1) limpBetCount from v_game_action a , 
+	(select playerID,ClubID,BindType, gameid from v_game_action j where GameStage = 'preflop'
+	 and  GameAction = 'call'  and RasieCount=0 and GameID not in (select gameID from v_game_action where PlayerID=j.PlayerID and GameStage = 'preflop'
+	 and  (GameAction ='raise' or GameAction='call' or GameAction = 'allin' or GameAction='fold')
+	<![CDATA[ and ActionIndex> PlayerCount+2) ]]>
+	and (select count(GameAction) from v_game_action where GameID = j.GameID and PlayerID = j.PlayerID 
+	<![CDATA[and GameStage='turn')>0]]>
+	) b where  a.GameStage='turn' and (a.GameAction = 'call')  and a.MyActionIndex=1 and a.ClubID = b.ClubID and a.BindType = b.BindType and 
+	a.PlayerID = b.PlayerID and a.GameID = b.GameID
+	group by  a.ClubID,a.BindType,a.PlayerID) as c left outer join 
+	(select a.ClubID,a.BindType,a.PlayerID,a.PositionName , count(1) positionLimpBetCount from v_game_action a , 
+	(select playerID,ClubID,BindType, gameid from v_game_action j where GameStage = 'preflop'
+	 and  GameAction = 'call'  and RasieCount=0 and GameID not in (select gameID from v_game_action where PlayerID=j.PlayerID and GameStage = 'preflop'
+	 and  (GameAction ='raise' or GameAction='call' or GameAction = 'allin' or GameAction='fold')
+	<![CDATA[ and ActionIndex> PlayerCount+2) ]]>
+	and (select count(GameAction) from v_game_action where GameID = j.GameID  and PlayerID = j.PlayerID 
+	<![CDATA[and GameStage='turn')>0]]>
+	) b where  a.GameStage='turn'  and (a.GameAction = 'call')  and a.MyActionIndex=1 
+	and a.PositionName=#{position,jdbcType=VARCHAR}
+	and a.ClubID = b.ClubID and a.BindType = b.BindType and 
+	a.PlayerID = b.PlayerID and a.GameID = b.GameID 
+	group by  a.ClubID,a.BindType,a.PlayerID,a.PositionName) as d
+	on c.ClubID = d.ClubID and c.BindType = d.BindType and c.PlayerID = d.PlayerID
+    </select>
+    <!-- 4036 -->
+	<select id="findTurnTotalLimpInPotRaiseRate" parameterType="java.lang.String" resultMap="BaseResultMap" >   
+	select c.ClubID,c.BindType as BlindType,c.PlayerID,c.limpCount as Denominator,
+	if(d.limpBetCount is null, 0,d.limpBetCount) Numerator,
+	format(if(d.limpBetCount is null, 0,d.limpBetCount)/c.limpCount,2) KpiValue
+	from (select playerID,ClubID,BindType, count(distinct(gameid)) limpCount from v_game_action j where GameStage = 'preflop'
+	and  GameAction = 'call'  and RasieCount=0 and GameID not in (select gameID from v_game_action where PlayerID=j.PlayerID and GameStage = 'preflop'
+	and  (GameAction ='raise' or GameAction='call' or GameAction = 'allin' or GameAction='fold') and 
+	<![CDATA[ActionIndex> PlayerCount+2)]]>
+	and (select count(GameAction) from v_game_action where GameID = j.GameID and PlayerID = j.PlayerID 
+	<![CDATA[and GameStage='turn')>0]]>
+	group by ClubID,BindType,PlayerID) as c left outer join 
+	(select a.ClubID,a.BindType,a.PlayerID, count(1) limpBetCount from v_game_action a , 
+	(select playerID,ClubID,BindType, gameid from v_game_action j where GameStage = 'preflop'
+	and  GameAction = 'call'  and RasieCount=0 and GameID not in (select gameID from v_game_action where PlayerID=j.PlayerID and GameStage = 'preflop'
+	and  (GameAction ='raise' or GameAction='call' or GameAction = 'allin' or GameAction='fold')
+	<![CDATA[and ActionIndex> PlayerCount+2) ]]>
+	and (select count(GameAction) from v_game_action where GameID = j.GameID and PlayerID = j.PlayerID
+	<![CDATA[and GameStage='turn')>0]]>
+	) b where  a.GameStage='turn' and (a.GameAction = 'raise' or a.GameAction = 'allin') and a.MyActionIndex=1 and a.ClubID = b.ClubID and a.BindType = b.BindType and 
+	a.PlayerID = b.PlayerID and a.GameID = b.GameID
+	group by  a.ClubID,a.BindType,a.PlayerID) as d
+	on c.ClubID = d.ClubID and c.BindType = d.BindType and c.PlayerID = d.PlayerID
+    </select>
+    <!-- 4037-4041 -->
+	<select id="findTurnLimpInPotRaiseRate" parameterType="java.lang.String" resultMap="BaseResultMap" >   
+	select c.ClubID,c.BindType as BlindType,c.PlayerID,c.limpBetCount as Denominator,
+	if(d.positionLimpBetCount is null, 0,d.positionLimpBetCount) Numerator,
+	format(if(d.positionLimpBetCount is null, 0,d.positionLimpBetCount)/c.limpBetCount,2) KpiValue
+	from (select a.ClubID,a.BindType,a.PlayerID, count(1) limpBetCount from v_game_action a , 
+	(select playerID,ClubID,BindType, gameid from v_game_action j where GameStage = 'preflop'
+	and  GameAction = 'call'  and RasieCount=0 and GameID not in (select gameID from v_game_action where PlayerID=j.PlayerID and GameStage = 'preflop'
+	and  (GameAction ='raise' or GameAction='call' or GameAction = 'allin' or GameAction='fold')
+	<![CDATA[and ActionIndex> PlayerCount+2) ]]>
+	and (select count(GameAction) from v_game_action where GameID = j.GameID and PlayerID = j.PlayerID 
+	<![CDATA[and GameStage='turn')>0]]>
+	) b where  a.GameStage='turn' and (a.GameAction = 'raise' or a.GameAction = 'allin') and a.MyActionIndex=1 and a.ClubID = b.ClubID and a.BindType = b.BindType and 
+	a.PlayerID = b.PlayerID and a.GameID = b.GameID
+	group by  a.ClubID,a.BindType,a.PlayerID) as c left outer join 
+	(select a.ClubID,a.BindType,a.PlayerID,a.PositionName , count(1) positionLimpBetCount from v_game_action a , 
+	(select playerID,ClubID,BindType, gameid from v_game_action j where GameStage = 'preflop'
+	and  GameAction = 'call'  and RasieCount=0 and GameID not in (select gameID from v_game_action where PlayerID=j.PlayerID and GameStage = 'preflop'
+	and  (GameAction ='raise' or GameAction='call' or GameAction = 'allin' or GameAction='fold')
+	<![CDATA[and ActionIndex> PlayerCount+2)]]> 
+	and (select count(GameAction) from v_game_action where GameID = j.GameID  and PlayerID = j.PlayerID 
+	<![CDATA[and GameStage='turn')>0]]>
+	) b where  a.GameStage='turn'  and (a.GameAction = 'raise' or a.GameAction = 'allin') and a.MyActionIndex=1 
+	and a.PositionName=#{position,jdbcType=VARCHAR}
+	and a.ClubID = b.ClubID and a.BindType = b.BindType and 
+	a.PlayerID = b.PlayerID and a.GameID = b.GameID 
+	group by  a.ClubID,a.BindType,a.PlayerID,a.PositionName) as d
+	on c.ClubID = d.ClubID and c.BindType = d.BindType and c.PlayerID = d.PlayerID
+    </select>
+    <!-- 4042 -->
+	<select id="findTurnTotalLimpInPotCheckCallRate" parameterType="java.lang.String" resultMap="BaseResultMap" >   
+	select c.ClubID,c.BindType as BlindType,c.PlayerID,c.limpCount as Denominator,
+	if(f.limpBetCount is null, 0,f.limpBetCount) Numerator,
+	format(if(f.limpBetCount is null, 0,f.limpBetCount)/c.limpCount,2) KpiValue
+	from (select playerID,ClubID,BindType, count(distinct(gameid)) limpCount from v_game_action j where GameStage = 'preflop'
+	and  GameAction = 'call'  and RasieCount=0 and GameID not in (select gameID from v_game_action where PlayerID=j.PlayerID and GameStage = 'preflop'
+	and  (GameAction ='raise' or GameAction='call' or GameAction = 'allin' or GameAction='fold') 
+	<![CDATA[and ActionIndex> PlayerCount+2)]]>
+	and (select count(GameAction) from v_game_action where GameID = j.GameID and PlayerID = j.PlayerID 
+	<![CDATA[and GameStage='turn')>0]]>
+	group by ClubID,BindType,PlayerID) as c left outer join 
+	(select d.ClubID,d.BindType,d.PlayerID from v_game_action d,
+	(select a.ClubID,a.BindType,a.PlayerID,a.GameID from v_game_action a , 
+	(select playerID,ClubID,BindType, gameid from v_game_action j where GameStage = 'preflop'
+	and  GameAction = 'call'  and RasieCount=0 and GameID not in (select gameID from v_game_action where PlayerID=j.PlayerID and GameStage = 'preflop'
+	and  (GameAction ='raise' or GameAction='call' or GameAction = 'allin' or GameAction='fold')
+	<![CDATA[and ActionIndex> PlayerCount+2) ]]>
+	and (select count(GameAction) from v_game_action where GameID = j.GameID and PlayerID = j.PlayerID 
+	<![CDATA[and GameStage='turn')>0]]>
+	) b where  a.GameStage='turn' and (a.GameAction = 'check') and a.MyActionIndex=1 and a.ClubID = b.ClubID and a.BindType = b.BindType and 
+	a.PlayerID = b.PlayerID and a.GameID = b.GameID
+	) as e
+	where d.GameStage='turn' and (d.GameAction = 'call') and d.MyActionIndex=2 and d.ClubID = e.ClubID and d.BindType = e.BindType and 
+	d.PlayerID = e.PlayerID and d.GameID = e.GameID
+	group by  d.ClubID,d.BindType,d.PlayerID) as f
+	on c.ClubID = f.ClubID and c.BindType = f.BindType and c.PlayerID = f.PlayerID
+    </select>
+    <!-- 4043-4047 -->
+	<select id="findTurnLimpInPotCheckCallRate" parameterType="java.lang.String" resultMap="BaseResultMap" >   
+	select c.ClubID,c.BindType as BlindType,c.PlayerID,c.limpCount as Denominator,
+	if(f.limpBetCount is null, 0,f.limpBetCount) Numerator,
+	format(if(f.limpBetCount is null, 0,f.limpBetCount)/c.limpCount,2) KpiValue
+	from (select d.ClubID,d.BindType,d.PlayerID, count(1) limpCount from v_game_action d,
+	(select a.ClubID,a.BindType,a.PlayerID,a.GameID from v_game_action a , 
+	(select playerID,ClubID,BindType, gameid from v_game_action j where GameStage = 'preflop'
+	and  GameAction = 'call'  and RasieCount=0 and GameID not in (select gameID from v_game_action where PlayerID=j.PlayerID and GameStage = 'preflop'
+	and  (GameAction ='raise' or GameAction='call' or GameAction = 'allin' or GameAction='fold')
+	<![CDATA[and ActionIndex> PlayerCount+2) ]]>
+	and (select count(GameAction) from v_game_action where GameID = j.GameID and PlayerID = j.PlayerID 
+	<![CDATA[and GameStage='turn')>0]]>
+	) b where  a.GameStage='turn' and (a.GameAction = 'check') and a.MyActionIndex=1 and a.ClubID = b.ClubID and a.BindType = b.BindType and 
+	a.PlayerID = b.PlayerID and a.GameID = b.GameID
+	) as e
+	where d.GameStage='turn' and (d.GameAction = 'call') and d.MyActionIndex=2 and d.ClubID = e.ClubID and d.BindType = e.BindType and 
+	d.PlayerID = e.PlayerID and d.GameID = e.GameID
+	group by  d.ClubID,d.BindType,d.PlayerID) as c left outer join 
+	(select d.ClubID,d.BindType,d.PlayerID,d.PositionName, count(1) limpBetCount from v_game_action d,
+	(select a.ClubID,a.BindType,a.PlayerID,a.GameID from v_game_action a , 
+	(select playerID,ClubID,BindType, gameid from v_game_action j where GameStage = 'preflop'
+	 and  GameAction = 'call'  and RasieCount=0 and GameID not in (select gameID from v_game_action where PlayerID=j.PlayerID and GameStage = 'preflop'
+	 and  (GameAction ='raise' or GameAction='call' or GameAction = 'allin' or GameAction='fold')
+	<![CDATA[ and ActionIndex> PlayerCount+2)]]> 
+	and (select count(GameAction) from v_game_action where GameID = j.GameID and PlayerID = j.PlayerID 
+	<![CDATA[and GameStage='turn')>0]]>
+	) b where  a.GameStage='turn' and (a.GameAction = 'check') and a.MyActionIndex=1 and a.ClubID = b.ClubID and a.BindType = b.BindType and 
+	a.PlayerID = b.PlayerID and a.GameID = b.GameID
+	) as e
+	where d.GameStage='turn' and (d.GameAction = 'call') and d.MyActionIndex=2 
+	and d.PositionName = #{position,jdbcType=VARCHAR}
+	 and d.ClubID = e.ClubID and d.BindType = e.BindType and 
+	d.PlayerID = e.PlayerID and d.GameID = e.GameID
+	group by  d.ClubID,d.BindType,d.PlayerID,d.PositionName) as f
+	on c.ClubID = f.ClubID and c.BindType = f.BindType and c.PlayerID = f.PlayerID
+    </select>
+    <!-- 4048 -->
+	<select id="findTurnTotalLimpInPotCheckRaiseRate" parameterType="java.lang.String" resultMap="BaseResultMap" >   
+	select c.ClubID,c.BindType as BlindType,c.PlayerID,c.limpCount as Denominator,
+	if(f.limpBetCount is null, 0,f.limpBetCount) Numerator,
+	format(if(f.limpBetCount is null, 0,f.limpBetCount)/c.limpCount,2) KpiValue
+	from 
+	(select playerID,ClubID,BindType, count(distinct(gameid)) limpCount from v_game_action j where GameStage = 'preflop'
+	and  GameAction = 'call'  and RasieCount=0 and GameID not in (select gameID from v_game_action where PlayerID=j.PlayerID and GameStage = 'preflop'
+	and  (GameAction ='raise' or GameAction='call' or GameAction = 'allin' or GameAction='fold') 
+	<![CDATA[and ActionIndex> PlayerCount+2)]]>
+	and (select count(GameAction) from v_game_action where GameID = j.GameID and PlayerID = j.PlayerID 
+	<![CDATA[and GameStage='turn')>0]]>
+	group by ClubID,BindType,PlayerID) as c left outer join 
+	(select d.ClubID,d.BindType,d.PlayerID from v_game_action d,
+	(select a.ClubID,a.BindType,a.PlayerID,a.GameID from v_game_action a , 
+	(select playerID,ClubID,BindType, gameid from v_game_action j where GameStage = 'preflop'
+	and  GameAction = 'call'  and RasieCount=0 and GameID not in (select gameID from v_game_action where PlayerID=j.PlayerID and GameStage = 'preflop'
+	and  (GameAction ='raise' or GameAction='call' or GameAction = 'allin' or GameAction='fold')
+	<![CDATA[and ActionIndex> PlayerCount+2) ]]>
+	and (select count(GameAction) from v_game_action where GameID = j.GameID and PlayerID = j.PlayerID 
+	<![CDATA[and GameStage='turn')>0]]>
+	) b where  a.GameStage='turn' and (a.GameAction = 'check') and a.MyActionIndex=1 and a.ClubID = b.ClubID and a.BindType = b.BindType and 
+	a.PlayerID = b.PlayerID and a.GameID = b.GameID
+	) as e
+	where d.GameStage='turn' and (d.GameAction = 'raise' or d.GameAction = 'allin' ) and d.MyActionIndex=2 and d.ClubID = e.ClubID and d.BindType = e.BindType and 
+	d.PlayerID = e.PlayerID and d.GameID = e.GameID
+	group by  d.ClubID,d.BindType,d.PlayerID) as f
+	on c.ClubID = f.ClubID and c.BindType = f.BindType and c.PlayerID = f.PlayerID
+    </select>
+    <!-- 4049-4053 -->
+	<select id="findTurnLimpInPotCheckRaiseRate" parameterType="java.lang.String" resultMap="BaseResultMap" >   
+	select c.ClubID,c.BindType as BlindType,c.PlayerID,c.limpCount as Denominator,
+	if(f.limpBetCount is null, 0,f.limpBetCount) Numerator,
+	format(if(f.limpBetCount is null, 0,f.limpBetCount)/c.limpCount,2) KpiValue
+	from 
+	(select d.ClubID,d.BindType,d.PlayerID, count(1) limpCount from v_game_action d,
+	(select a.ClubID,a.BindType,a.PlayerID,a.GameID from v_game_action a , 
+	(select playerID,ClubID,BindType, gameid from v_game_action j where GameStage = 'preflop'
+	and  GameAction = 'call'  and RasieCount=0 and GameID not in (select gameID from v_game_action where PlayerID=j.PlayerID and GameStage = 'preflop'
+	and  (GameAction ='raise' or GameAction='call' or GameAction = 'allin' or GameAction='fold')
+	<![CDATA[and ActionIndex> PlayerCount+2) ]]>
+	and (select count(GameAction) from v_game_action where GameID = j.GameID and PlayerID = j.PlayerID 
+	<![CDATA[and GameStage='turn')>0]]>
+	) b where  a.GameStage='turn' and (a.GameAction = 'check') and a.MyActionIndex=1 and a.ClubID = b.ClubID and a.BindType = b.BindType and 
+	a.PlayerID = b.PlayerID and a.GameID = b.GameID
+	) as e
+	where d.GameStage='turn' and (d.GameAction = 'raise' or d.GameAction = 'allin' ) and d.MyActionIndex=2 and d.ClubID = e.ClubID and d.BindType = e.BindType and 
+	d.PlayerID = e.PlayerID and d.GameID = e.GameID
+	group by  d.ClubID,d.BindType,d.PlayerID) as c left outer join 
+	(select d.ClubID,d.BindType,d.PlayerID,d.PositionName, count(1) limpBetCount from v_game_action d,
+	(select a.ClubID,a.BindType,a.PlayerID,a.GameID from v_game_action a , 
+	(select playerID,ClubID,BindType, gameid from v_game_action j where GameStage = 'preflop'
+	 and  GameAction = 'call'  and RasieCount=0 and GameID not in (select gameID from v_game_action where PlayerID=j.PlayerID and GameStage = 'preflop'
+	 and  (GameAction ='raise' or GameAction='call' or GameAction = 'allin' or GameAction='fold')
+	<![CDATA[ and ActionIndex> PlayerCount+2) ]]>
+	and (select count(GameAction) from v_game_action where GameID = j.GameID and PlayerID = j.PlayerID 
+	<![CDATA[and GameStage='turn')>0]]>
+	) b where  a.GameStage='turn' and (a.GameAction = 'check') and a.MyActionIndex=1 and a.ClubID = b.ClubID and a.BindType = b.BindType and 
+	a.PlayerID = b.PlayerID and a.GameID = b.GameID
+	) as e
+	where d.GameStage='turn' and (d.GameAction = 'raise' or d.GameAction = 'allin' ) and d.MyActionIndex=2 
+	and d.PositionName = #{position,jdbcType=VARCHAR}
+	 and d.ClubID = e.ClubID and d.BindType = e.BindType and 
+	d.PlayerID = e.PlayerID and d.GameID = e.GameID
+	group by  d.ClubID,d.BindType,d.PlayerID,d.PositionName) as f
+	on c.ClubID = f.ClubID and c.BindType = f.BindType and c.PlayerID = f.PlayerID
+    </select>
+    <!-- 4054 -->
+	<select id="findTurnTotalLimpInPotFoldRate" parameterType="java.lang.String" resultMap="BaseResultMap" >   
+	select c.ClubID,c.BindType as BlindType,c.PlayerID,c.limpCount as Denominator,
+	if(d.limpBetCount is null, 0,d.limpBetCount) Numerator,
+	format(if(d.limpBetCount is null, 0,d.limpBetCount)/c.limpCount,2) KpiValue
+	from 
+	(select playerID,ClubID,BindType, count(distinct(gameid)) limpCount from v_game_action j where GameStage = 'preflop'
+	and  GameAction = 'call'  and RasieCount=0 and GameID not in (select gameID from v_game_action where PlayerID=j.PlayerID and GameStage = 'preflop'
+	and  (GameAction ='raise' or GameAction='call' or GameAction = 'allin' or GameAction='fold') 
+	<![CDATA[and ActionIndex> PlayerCount+2)]]>
+	and (select count(GameAction) from v_game_action where GameID = j.GameID and PlayerID = j.PlayerID 
+	<![CDATA[and GameStage='turn')>0]]>
+	group by ClubID,BindType,PlayerID) as c left outer join 
+	(select a.ClubID,a.BindType,a.PlayerID, count(1) limpBetCount from v_game_action a , 
+	(select playerID,ClubID,BindType, gameid from v_game_action j where GameStage = 'preflop'
+	and  GameAction = 'call'  and RasieCount=0 and GameID not in (select gameID from v_game_action where PlayerID=j.PlayerID and GameStage = 'preflop'
+	and  (GameAction ='raise' or GameAction='call' or GameAction = 'allin' or GameAction='fold')
+	<![CDATA[and ActionIndex> PlayerCount+2)]]> 
+	and (select count(GameAction) from v_game_action where GameID = j.GameID and PlayerID = j.PlayerID 
+	<![CDATA[and GameStage='turn')>0]]>
+	) b where  a.GameStage='turn' and (a.GameAction = 'fold') and a.MyActionIndex=1 and a.ClubID = b.ClubID and a.BindType = b.BindType and 
+	a.PlayerID = b.PlayerID and a.GameID = b.GameID
+	group by  a.ClubID,a.BindType,a.PlayerID) as d
+	on c.ClubID = d.ClubID and c.BindType = d.BindType and c.PlayerID = d.PlayerID
+    </select>
+    <!-- 4055-4060 -->
+	<select id="findTurnLimpInPotCheckFoldRate" parameterType="java.lang.String" resultMap="BaseResultMap" >   
+	select c.ClubID,c.BindType as BlindType,c.PlayerID,c.limpBetCount as Denominator,
+	if(d.positionLimpBetCount is null, 0,d.positionLimpBetCount) Numerator,
+	format(if(d.positionLimpBetCount is null, 0,d.positionLimpBetCount)/c.limpBetCount,2) KpiValue
+	from 
+	(select a.ClubID,a.BindType,a.PlayerID, count(1) limpBetCount from v_game_action a , 
+	(select playerID,ClubID,BindType, gameid from v_game_action j where GameStage = 'preflop'
+	 and  GameAction = 'call'  and RasieCount=0 and GameID not in (select gameID from v_game_action where PlayerID=j.PlayerID and GameStage = 'preflop'
+	 and  (GameAction ='raise' or GameAction='call' or GameAction = 'allin' or GameAction='fold')
+	 <![CDATA[and ActionIndex> PlayerCount+2) ]]>
+	and (select count(GameAction) from v_game_action where GameID = j.GameID and PlayerID = j.PlayerID 
+	<![CDATA[and GameStage='turn')>0]]>
+	) b where  a.GameStage='turn' and (a.GameAction = 'fold') and a.MyActionIndex=1 and a.ClubID = b.ClubID and a.BindType = b.BindType and 
+	a.PlayerID = b.PlayerID and a.GameID = b.GameID
+	group by  a.ClubID,a.BindType,a.PlayerID) as c left outer join 
+	(select a.ClubID,a.BindType,a.PlayerID,a.PositionName , count(1) positionLimpBetCount from v_game_action a , 
+	(select playerID,ClubID,BindType, gameid from v_game_action j where GameStage = 'preflop'
+	 and  GameAction = 'call'  and RasieCount=0 and GameID not in (select gameID from v_game_action where PlayerID=j.PlayerID and GameStage = 'preflop'
+	 and  (GameAction ='raise' or GameAction='call' or GameAction = 'allin' or GameAction='fold')
+	<![CDATA[ and ActionIndex> PlayerCount+2) ]]>
+	and (select count(GameAction) from v_game_action where GameID = j.GameID  and PlayerID = j.PlayerID 
+	<![CDATA[and GameStage='turn')>0]]>
+	) b where  a.GameStage='turn'  and (a.GameAction = 'fold') and a.MyActionIndex=1 
+	and a.PositionName= #{position,jdbcType=VARCHAR} 
+	and a.ClubID = b.ClubID and a.BindType = b.BindType and 
+	a.PlayerID = b.PlayerID and a.GameID = b.GameID 
+	group by  a.ClubID,a.BindType,a.PlayerID,a.PositionName) as d
+	on c.ClubID = d.ClubID and c.BindType = d.BindType and c.PlayerID = d.PlayerID
+    </select>
+  <!-- 根据KpiCode删除数据 -->
+  <delete id="deleteKpiByKpiCode" parameterType="java.lang.String">
+    delete from slt_player_kpi where KpiCode = #{kpiCode,jdbcType=VARCHAR}
+  </delete>
+  <!-- 批量插入数据 -->
+  <insert id="insertKpiBatch">
+		insert into slt_player_kpi (PlayerKpiID, PlayerID, ClubID, BlindType, KpiCode, KpiValue,ClubKpiValue, UpdateDT)
+		values
+		<foreach collection="list" item="PlayerKpi" index="index"
+			separator=",">
+			(#{PlayerKpi.playerKpiID,jdbcType=VARCHAR},
+			#{PlayerKpi.playerID,jdbcType=VARCHAR},
+			#{PlayerKpi.clubID,jdbcType=VARCHAR},
+			#{PlayerKpi.blindType,jdbcType=INTEGER}, 
+			#{PlayerKpi.kpiCode,jdbcType=VARCHAR},
+			#{PlayerKpi.kpiValue,jdbcType=VARCHAR},
+			#{PlayerKpi.clubKpiValue,jdbcType=VARCHAR},
+			#{PlayerKpi.updateDT,jdbcType=VARCHAR})
+		</foreach>
+  </insert>
+</mapper>

@@ -1,0 +1,41 @@
+package com.slt.poker.task;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
+import com.slt.poker.service.PlayerKPIService;
+import com.slt.poker.service.RankingService;
+
+@Component
+public class CalcKpiTask {
+	private static final Logger log = LoggerFactory.getLogger(CalcKpiTask.class);
+	@Autowired
+	private RankingService rankingService;
+	@Autowired
+	private PlayerKPIService playerKPIService;
+	/**
+	 * 计算指标
+	 */
+//	@Scheduled(cron = "${calcKpi}")
+	@Scheduled(fixedRate = 20 * 1000)
+	public void calcKpi() {
+		long beginTime = System.currentTimeMillis();
+		log.info("==calculate kpi executing==");
+		log.info("==beginTime:{}",beginTime);
+		try {
+				//this.rankingService.saveCalcWeek();
+				//this.rankingService.saveCalcMonth();
+			    //this.playerKPIService.saveSevenDayProfit();
+			    //this.playerKPIService.savePlayerKPIMonth();
+			//this.playerKPIService.saveMilitaryExploits();
+			this.playerKPIService.savePlayerHavaShowdownWinRate();
+		} catch (Exception e) {
+			log.error("**calcProfit error**");
+		}
+		long endTime = System.currentTimeMillis();
+		log.info("==calculate kpi execut success==spend:{}(ms)", (endTime - beginTime));
+	}
+}

@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.slt.poker.dao.PartyPlayerMapper" >
+  <resultMap id="BaseResultMap" type="com.slt.poker.dto.PartyPlayer" >
+    <id column="PartyID" property="partyID" jdbcType="VARCHAR" />
+    <id column="PlayerID" property="playerID" jdbcType="VARCHAR" />
+    <result column="BuyIn" property="buyIn" jdbcType="VARCHAR" />
+    <result column="TakeOut" property="takeOut" jdbcType="VARCHAR" />
+    <result column="MatchResult" property="matchResult" jdbcType="VARCHAR" />
+    <result column="InsureBuy" property="insureBuy" jdbcType="VARCHAR" />
+    <result column="InsureClaim" property="insureClaim" jdbcType="VARCHAR" />
+    <result column="InsureProfit" property="insureProfit" jdbcType="VARCHAR" />
+    <result column="CreateDT" property="createDT" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    PartyID, PlayerID, BuyIn, TakeOut, MatchResult, InsureBuy, InsureClaim, InsureProfit, 
+    CreateDT
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="com.slt.poker.dto.PartyPlayerKey" >
+    select 
+    <include refid="Base_Column_List" />
+    from slt_party_player
+    where PartyID = #{partyID,jdbcType=VARCHAR}
+      and PlayerID = #{playerID,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="com.slt.poker.dto.PartyPlayerKey" >
+    delete from slt_party_player
+    where PartyID = #{partyID,jdbcType=VARCHAR}
+      and PlayerID = #{playerID,jdbcType=VARCHAR}
+  </delete>
+  <insert id="insert" parameterType="com.slt.poker.dto.PartyPlayer" >
+    insert into slt_party_player (PartyID, PlayerID, BuyIn, 
+      TakeOut, MatchResult, InsureBuy, 
+      InsureClaim, InsureProfit, CreateDT
+      )
+    values (#{partyID,jdbcType=VARCHAR}, #{playerID,jdbcType=VARCHAR}, #{buyIn,jdbcType=VARCHAR}, 
+      #{takeOut,jdbcType=VARCHAR}, #{matchResult,jdbcType=VARCHAR}, #{insureBuy,jdbcType=VARCHAR}, 
+      #{insureClaim,jdbcType=VARCHAR}, #{insureProfit,jdbcType=VARCHAR}, #{createDT,jdbcType=VARCHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.slt.poker.dto.PartyPlayer" >
+    insert into slt_party_player
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="partyID != null" >
+        PartyID,
+      </if>
+      <if test="playerID != null" >
+        PlayerID,
+      </if>
+      <if test="buyIn != null" >
+        BuyIn,
+      </if>
+      <if test="takeOut != null" >
+        TakeOut,
+      </if>
+      <if test="matchResult != null" >
+        MatchResult,
+      </if>
+      <if test="insureBuy != null" >
+        InsureBuy,
+      </if>
+      <if test="insureClaim != null" >
+        InsureClaim,
+      </if>
+      <if test="insureProfit != null" >
+        InsureProfit,
+      </if>
+      <if test="createDT != null" >
+        CreateDT,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="partyID != null" >
+        #{partyID,jdbcType=VARCHAR},
+      </if>
+      <if test="playerID != null" >
+        #{playerID,jdbcType=VARCHAR},
+      </if>
+      <if test="buyIn != null" >
+        #{buyIn,jdbcType=VARCHAR},
+      </if>
+      <if test="takeOut != null" >
+        #{takeOut,jdbcType=VARCHAR},
+      </if>
+      <if test="matchResult != null" >
+        #{matchResult,jdbcType=VARCHAR},
+      </if>
+      <if test="insureBuy != null" >
+        #{insureBuy,jdbcType=VARCHAR},
+      </if>
+      <if test="insureClaim != null" >
+        #{insureClaim,jdbcType=VARCHAR},
+      </if>
+      <if test="insureProfit != null" >
+        #{insureProfit,jdbcType=VARCHAR},
+      </if>
+      <if test="createDT != null" >
+        #{createDT,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.slt.poker.dto.PartyPlayer" >
+    update slt_party_player
+    <set >
+      <if test="buyIn != null" >
+        BuyIn = #{buyIn,jdbcType=VARCHAR},
+      </if>
+      <if test="takeOut != null" >
+        TakeOut = #{takeOut,jdbcType=VARCHAR},
+      </if>
+      <if test="matchResult != null" >
+        MatchResult = #{matchResult,jdbcType=VARCHAR},
+      </if>
+      <if test="insureBuy != null" >
+        InsureBuy = #{insureBuy,jdbcType=VARCHAR},
+      </if>
+      <if test="insureClaim != null" >
+        InsureClaim = #{insureClaim,jdbcType=VARCHAR},
+      </if>
+      <if test="insureProfit != null" >
+        InsureProfit = #{insureProfit,jdbcType=VARCHAR},
+      </if>
+      <if test="createDT != null" >
+        CreateDT = #{createDT,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where PartyID = #{partyID,jdbcType=VARCHAR}
+      and PlayerID = #{playerID,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.slt.poker.dto.PartyPlayer" >
+    update slt_party_player
+    set BuyIn = #{buyIn,jdbcType=VARCHAR},
+      TakeOut = #{takeOut,jdbcType=VARCHAR},
+      MatchResult = #{matchResult,jdbcType=VARCHAR},
+      InsureBuy = #{insureBuy,jdbcType=VARCHAR},
+      InsureClaim = #{insureClaim,jdbcType=VARCHAR},
+      InsureProfit = #{insureProfit,jdbcType=VARCHAR},
+      CreateDT = #{createDT,jdbcType=VARCHAR}
+    where PartyID = #{partyID,jdbcType=VARCHAR}
+      and PlayerID = #{playerID,jdbcType=VARCHAR}
+  </update>
+</mapper>

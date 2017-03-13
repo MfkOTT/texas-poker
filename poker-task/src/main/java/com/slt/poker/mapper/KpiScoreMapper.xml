@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.slt.poker.dao.KpiScoreMapper" >
+  <resultMap id="BaseResultMap" type="com.slt.poker.dto.KpiScore" >
+    <id column="KpiCode" property="kpiCode" jdbcType="VARCHAR" />
+    <result column="Kpi_Score" property="kpi_Score" jdbcType="VARCHAR" />
+  </resultMap>
+  <resultMap id="ResultMapWithBLOBs" type="com.slt.poker.dto.KpiScore" extends="BaseResultMap" >
+    <result column="Sugguet" property="sugguet" jdbcType="LONGVARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    KpiCode, Kpi_Score
+  </sql>
+  <sql id="Blob_Column_List" >
+    Sugguet
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="ResultMapWithBLOBs" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    ,
+    <include refid="Blob_Column_List" />
+    from slt_kpi_score
+    where KpiCode = #{kpiCode,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from slt_kpi_score
+    where KpiCode = #{kpiCode,jdbcType=VARCHAR}
+  </delete>
+  <insert id="insert" parameterType="com.slt.poker.dto.KpiScore" >
+    insert into slt_kpi_score (KpiCode, Kpi_Score, Sugguet
+      )
+    values (#{kpiCode,jdbcType=VARCHAR}, #{kpi_Score,jdbcType=VARCHAR}, #{sugguet,jdbcType=LONGVARCHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.slt.poker.dto.KpiScore" >
+    insert into slt_kpi_score
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="kpiCode != null" >
+        KpiCode,
+      </if>
+      <if test="kpi_Score != null" >
+        Kpi_Score,
+      </if>
+      <if test="sugguet != null" >
+        Sugguet,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="kpiCode != null" >
+        #{kpiCode,jdbcType=VARCHAR},
+      </if>
+      <if test="kpi_Score != null" >
+        #{kpi_Score,jdbcType=VARCHAR},
+      </if>
+      <if test="sugguet != null" >
+        #{sugguet,jdbcType=LONGVARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.slt.poker.dto.KpiScore" >
+    update slt_kpi_score
+    <set >
+      <if test="kpi_Score != null" >
+        Kpi_Score = #{kpi_Score,jdbcType=VARCHAR},
+      </if>
+      <if test="sugguet != null" >
+        Sugguet = #{sugguet,jdbcType=LONGVARCHAR},
+      </if>
+    </set>
+    where KpiCode = #{kpiCode,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKeyWithBLOBs" parameterType="com.slt.poker.dto.KpiScore" >
+    update slt_kpi_score
+    set Kpi_Score = #{kpi_Score,jdbcType=VARCHAR},
+      Sugguet = #{sugguet,jdbcType=LONGVARCHAR}
+    where KpiCode = #{kpiCode,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.slt.poker.dto.KpiScore" >
+    update slt_kpi_score
+    set Kpi_Score = #{kpi_Score,jdbcType=VARCHAR}
+    where KpiCode = #{kpiCode,jdbcType=VARCHAR}
+  </update>
+</mapper>

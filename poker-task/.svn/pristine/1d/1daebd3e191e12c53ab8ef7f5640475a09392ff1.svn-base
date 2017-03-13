@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.slt.poker.dao.ClubBlindMapper" >
+  <resultMap id="BaseResultMap" type="com.slt.poker.dto.ClubBlindKey" >
+    <id column="ClubID" property="clubID" jdbcType="VARCHAR" />
+    <id column="BlindType" property="blindType" jdbcType="INTEGER" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    ClubID, BlindType
+  </sql>
+  <select id="findClubBlindList" resultMap="BaseResultMap"  >
+    select 
+    <include refid="Base_Column_List" />
+    from slt_club_blind
+  </select>
+ 
+</mapper>

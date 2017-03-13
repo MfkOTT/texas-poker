@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.slt.poker.dao.ProfitListMapper" >
+  <resultMap id="BaseResultMap" type="com.slt.poker.dto.ProfitList" >
+    <id column="ListID" property="listID" jdbcType="VARCHAR" />
+    <result column="PlayerID" property="playerID" jdbcType="VARCHAR" />
+    <result column="ClubID" property="clubID" jdbcType="VARCHAR" />
+    <result column="BindType" property="bindType" jdbcType="INTEGER" />
+    <result column="StatisticStage" property="statisticStage" jdbcType="VARCHAR" />
+    <result column="ProfitIndex" property="profitIndex" jdbcType="INTEGER" />
+    <result column="StatisticPlayerCount" property="statisticPlayerCount" jdbcType="INTEGER" />
+    <result column="GameCount" property="gameCount" jdbcType="INTEGER" />
+    <result column="Profit" property="profit" jdbcType="VARCHAR" />
+    <result column="UpdateDT" property="updateDT" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    ListID, PlayerID, ClubID, BindType, StatisticStage, ProfitIndex, StatisticPlayerCount, GameCount
+    Profit, UpdateDT
+  </sql>
+  <select id="findProfitList" resultMap="BaseResultMap">
+	select
+    <![CDATA[ CASE when @bbb=t.ClubID and @aaa=t.BindType  
+    then  @group_row:=@group_row+1 else @group_row:=1 end as ProfitIndex,
+	@aaa:=t.Bindtype abc,@bbb:=t.ClubID ced, t.*
+ 	from (select ClubID,BindType, PlayerID,sum(MatchResult*1) Profit,count(1) GameCount,b.StatisticPlayerCount
+	from v_game_player a,(select count(distinct(playerID)) StatisticPlayerCount from v_game_player 
+	where PartyStartDT>#{dateStr,jdbcType=VARCHAR} group by ClubID,BindType) b
+	where PartyStartDT>#{dateStr,jdbcType=VARCHAR}
+	group by ClubID,BindType,PlayerID 
+	order by ClubID, BindType,profit desc) as t]]>
+	</select>
+	 <insert id="batchInsertProfit" parameterType="java.util.List">
+		insert into slt_profit_list (ListID, PlayerID, ClubID, BindType, StatisticStage, ProfitIndex, StatisticPlayerCount, GameCount,
+    Profit, UpdateDT)
+		values
+		<foreach collection="list" item="ProfitList" index="index"
+			separator=",">
+			(#{ProfitList.listID,jdbcType=VARCHAR},
+			#{ProfitList.playerID,jdbcType=VARCHAR},
+			#{ProfitList.clubID,jdbcType=VARCHAR},
+			#{ProfitList.bindType,jdbcType=INTEGER}, 
+			#{ProfitList.statisticStage,jdbcType=VARCHAR},
+			#{ProfitList.profitIndex,jdbcType=INTEGER},
+			#{ProfitList.statisticPlayerCount,jdbcType=INTEGER},
+			#{ProfitList.gameCount,jdbcType=INTEGER},
+			#{ProfitList.profit,jdbcType=VARCHAR},
+			#{ProfitList.updateDT,jdbcType=VARCHAR})
+		</foreach>
+	</insert>
+  <delete id="deleteProfitByStage" parameterType="java.lang.String" >
+    delete from slt_profit_list
+    where StatisticStage = #{statisticStage,jdbcType=VARCHAR}
+  </delete>
+</mapper>

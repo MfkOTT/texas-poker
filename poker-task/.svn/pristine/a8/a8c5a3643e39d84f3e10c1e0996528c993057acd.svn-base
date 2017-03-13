@@ -1,0 +1,248 @@
+package com.slt.poker.service;
+
+import java.util.Date;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.slt.poker.dao.PlayerKpiMapper;
+import com.slt.poker.dto.PlayerKpi;
+import com.slt.poker.util.NonceUtil;
+import com.slt.poker.util.SimpleDateUtil;
+
+@Service
+public class KpiService {
+
+	private final String[] position = new String[]{"EP","MP","CO","BTN","SB","BB"};
+	@Autowired
+	private PlayerKpiMapper playerKpiMapper;
+	/**
+	 * 各位置入池率
+	 * @throws Exception
+	 */
+	public void saveBetKpi() throws Exception{
+		//kpiCode从2002开始
+		for (int i = 0 ; i<6 ; i++) {
+			List<PlayerKpi> playerKpiList = this.playerKpiMapper.findBetKpiList(position[i]);
+			if(playerKpiList.isEmpty()){
+				continue;
+			}
+			String kpiCode = String.valueOf(i+2002);
+			String dateStr = SimpleDateUtil.format(new Date(), "yyyyMMddHHmmss");
+			for (PlayerKpi playerKpi2 : playerKpiList) {
+				playerKpi2.setPlayerKpiID(NonceUtil.getUuid());
+				playerKpi2.setKpiCode(kpiCode);
+				playerKpi2.setUpdateDT(dateStr);
+			}
+			this.playerKpiMapper.deleteKpiByKpiCode(kpiCode);
+			this.playerKpiMapper.insertKpiBatch(playerKpiList);
+		}
+	}
+	/**
+	 * 合计加注入池率
+	 * @throws Exception
+	 */
+	public void saveTotalRaiseKpi() throws Exception {
+
+		final String kpiCode = "2008";
+		List<PlayerKpi> totalRaiseKpiList = this.playerKpiMapper.findTotalRaiseBetKpiList();
+		if(!totalRaiseKpiList.isEmpty()){
+			String dateStr = SimpleDateUtil.format(new Date(), "yyyyMMddHHmmss");
+			for (PlayerKpi playerKpi2 : totalRaiseKpiList) {
+				playerKpi2.setPlayerKpiID(NonceUtil.getUuid());
+				playerKpi2.setKpiCode(kpiCode);
+				playerKpi2.setUpdateDT(dateStr);
+			}
+			this.playerKpiMapper.deleteKpiByKpiCode(kpiCode);
+			this.playerKpiMapper.insertKpiBatch(totalRaiseKpiList);
+		}
+	}
+
+	/**
+	 * 各位置加注入池率
+	 */
+	public void saveRaiseKpi() throws Exception {
+		// kpiCode从2009开始
+		for (int i = 0; i < 6; i++) {
+			List<PlayerKpi> playerKpiList = this.playerKpiMapper.findRaiseKpiList(position[i]);
+			if (playerKpiList.isEmpty()) {
+				continue;
+			}
+			String kpiCode = String.valueOf(i + 2009);
+			String dateStr = SimpleDateUtil.format(new Date(), "yyyyMMddHHmmss");
+			for (PlayerKpi playerKpi2 : playerKpiList) {
+				playerKpi2.setPlayerKpiID(NonceUtil.getUuid());
+				playerKpi2.setKpiCode(kpiCode);
+				playerKpi2.setUpdateDT(dateStr);
+			}
+			this.playerKpiMapper.deleteKpiByKpiCode(kpiCode);
+			this.playerKpiMapper.insertKpiBatch(playerKpiList);
+		}
+	}
+	/**
+	 * 合计冷跟注
+	 * @throws Exception
+	 */
+	public void saveTotalColdCallKpi() throws Exception{
+		final String kpiCode = "2015";
+		List<PlayerKpi> totalColdCallKpiList = this.playerKpiMapper.findTotalColdCallKpiList();
+		if(!totalColdCallKpiList.isEmpty()){
+			String dateStr = SimpleDateUtil.format(new Date(), "yyyyMMddHHmmss");
+			for (PlayerKpi playerKpi2 : totalColdCallKpiList) {
+				playerKpi2.setPlayerKpiID(NonceUtil.getUuid());
+				playerKpi2.setKpiCode(kpiCode);
+				playerKpi2.setUpdateDT(dateStr);
+			}
+			this.playerKpiMapper.deleteKpiByKpiCode(kpiCode);
+			this.playerKpiMapper.insertKpiBatch(totalColdCallKpiList);
+		}
+	}
+	/**
+	 * 各位置冷跟注率
+	 * @throws Exception
+	 */
+	public void saveColdCallKpi() throws Exception{
+		// kpiCode从2016开始
+		for (int i = 0; i < 6; i++) {
+			List<PlayerKpi> coldCallKpiList = this.playerKpiMapper.findColdCallKpiList(position[i]);
+			if (coldCallKpiList.isEmpty()) {
+				continue;
+			}
+			String kpiCode = String.valueOf(i + 2016);
+			String dateStr = SimpleDateUtil.format(new Date(), "yyyyMMddHHmmss");
+			for (PlayerKpi playerKpi2 : coldCallKpiList) {
+				playerKpi2.setPlayerKpiID(NonceUtil.getUuid());
+				playerKpi2.setKpiCode(kpiCode);
+				playerKpi2.setUpdateDT(dateStr);
+			}
+			this.playerKpiMapper.deleteKpiByKpiCode(kpiCode);
+			this.playerKpiMapper.insertKpiBatch(coldCallKpiList);
+		}
+		
+	}
+	/**
+	 * 合计溜入率
+	 * @throws Exception
+	 */
+	public void saveTotalSneakInKpi() throws Exception{
+		final String kpiCode = "2022";
+		List<PlayerKpi> totalSneakInKpiList = this.playerKpiMapper.findTotalSneakInKpiList();
+		if(!totalSneakInKpiList.isEmpty()){
+			String dateStr = SimpleDateUtil.format(new Date(), "yyyyMMddHHmmss");
+			for (PlayerKpi playerKpi2 : totalSneakInKpiList) {
+				playerKpi2.setPlayerKpiID(NonceUtil.getUuid());
+				playerKpi2.setKpiCode(kpiCode);
+				playerKpi2.setUpdateDT(dateStr);
+			}
+			this.playerKpiMapper.deleteKpiByKpiCode(kpiCode);
+			this.playerKpiMapper.insertKpiBatch(totalSneakInKpiList);
+		}
+		
+	}
+	/**
+	 * 各位置溜入率
+	 * @throws Exception
+	 */
+	public void saveSneakInKpi() throws Exception{
+		// kpiCode从2023开始
+		for (int i = 0; i < 6; i++) {
+			List<PlayerKpi> coldCallKpiList = this.playerKpiMapper.findSneakInKpiList(position[i]);
+			if (coldCallKpiList.isEmpty()) {
+				continue;
+			}
+			String kpiCode = String.valueOf(i + 2023);
+			String dateStr = SimpleDateUtil.format(new Date(), "yyyyMMddHHmmss");
+			for (PlayerKpi playerKpi2 : coldCallKpiList) {
+				playerKpi2.setPlayerKpiID(NonceUtil.getUuid());
+				playerKpi2.setKpiCode(kpiCode);
+				playerKpi2.setUpdateDT(dateStr);
+			}
+			this.playerKpiMapper.deleteKpiByKpiCode(kpiCode);
+			this.playerKpiMapper.insertKpiBatch(coldCallKpiList);
+		}
+		
+	}
+	/**
+	 * 合计3Bet率
+	 * @throws Exception
+	 */
+	public void saveTotalBetThreeKpi() throws Exception{
+		final String kpiCode = "2029";
+		List<PlayerKpi> totalBetThreeKpiList = this.playerKpiMapper.findTotalBetThreeKpiList();
+		if(!totalBetThreeKpiList.isEmpty()){
+			String dateStr = SimpleDateUtil.format(new Date(), "yyyyMMddHHmmss");
+			for (PlayerKpi playerKpi2 : totalBetThreeKpiList) {
+				playerKpi2.setPlayerKpiID(NonceUtil.getUuid());
+				playerKpi2.setKpiCode(kpiCode);
+				playerKpi2.setUpdateDT(dateStr);
+			}
+			this.playerKpiMapper.deleteKpiByKpiCode(kpiCode);
+			this.playerKpiMapper.insertKpiBatch(totalBetThreeKpiList);
+		}
+	}
+	/**
+	 * 3Bet率
+	 * @throws Exception
+	 */
+	public void saveBetThreeKpi() throws Exception{
+		// kpiCode从2030开始
+		for (int i = 0; i < 6; i++) {
+			List<PlayerKpi> betThreeKpiList = this.playerKpiMapper.findBetThreeKpiList(position[i]);
+			if (betThreeKpiList.isEmpty()) {
+				continue;
+			}
+			String kpiCode = String.valueOf(i + 2030);
+			String dateStr = SimpleDateUtil.format(new Date(), "yyyyMMddHHmmss");
+			for (PlayerKpi playerKpi2 : betThreeKpiList) {
+				playerKpi2.setPlayerKpiID(NonceUtil.getUuid());
+				playerKpi2.setKpiCode(kpiCode);
+				playerKpi2.setUpdateDT(dateStr);
+			}
+			this.playerKpiMapper.deleteKpiByKpiCode(kpiCode);
+			this.playerKpiMapper.insertKpiBatch(betThreeKpiList);
+		}
+		
+	}
+	/**
+	 * 合计跟3Bet率
+	 * @throws Exception
+	 */
+	public void saveTotalCallBetThreeKpi() throws Exception{
+		final String kpiCode = "2036";
+		List<PlayerKpi> totalCallBetThreeKpiList = this.playerKpiMapper.findTotalCallBetThreeKpiList();
+		if(!totalCallBetThreeKpiList.isEmpty()){
+			String dateStr = SimpleDateUtil.format(new Date(), "yyyyMMddHHmmss");
+			for (PlayerKpi playerKpi2 : totalCallBetThreeKpiList) {
+				playerKpi2.setPlayerKpiID(NonceUtil.getUuid());
+				playerKpi2.setKpiCode(kpiCode);
+				playerKpi2.setUpdateDT(dateStr);
+			}
+			this.playerKpiMapper.deleteKpiByKpiCode(kpiCode);
+			this.playerKpiMapper.insertKpiBatch(totalCallBetThreeKpiList);
+		}
+	}
+	/**
+	 * 跟3Bet率
+	 * @throws Exception
+	 */
+	public void saveCallBetThreeKpi() throws Exception{
+		// kpiCode从2037开始
+		for (int i = 0; i < 6; i++) {
+			List<PlayerKpi> callBetThreeKpiList = this.playerKpiMapper.findCallBetThreeKpiList(position[i]);
+			if (callBetThreeKpiList.isEmpty()) {
+				continue;
+			}
+			String kpiCode = String.valueOf(i + 2037);
+			String dateStr = SimpleDateUtil.format(new Date(), "yyyyMMddHHmmss");
+			for (PlayerKpi playerKpi2 : callBetThreeKpiList) {
+				playerKpi2.setPlayerKpiID(NonceUtil.getUuid());
+				playerKpi2.setKpiCode(kpiCode);
+				playerKpi2.setUpdateDT(dateStr);
+			}
+			this.playerKpiMapper.deleteKpiByKpiCode(kpiCode);
+			this.playerKpiMapper.insertKpiBatch(callBetThreeKpiList);
+		}
+	}
+
+}

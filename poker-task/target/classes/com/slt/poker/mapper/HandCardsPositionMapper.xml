@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.slt.poker.dao.HandCardsPositionMapper" >
+  <resultMap id="BaseResultMap" type="com.slt.poker.dto.HandCardsPosition" >
+    <id column="PositionID" property="positionID" jdbcType="VARCHAR" />
+    <result column="PlayerID" property="playerID" jdbcType="VARCHAR" />
+    <result column="ClubID" property="clubID" jdbcType="VARCHAR" />
+    <result column="BindType" property="bindType" jdbcType="INTEGER" />
+    <result column="PositionName" property="positionName" jdbcType="VARCHAR" />
+    <result column="HandCardCode" property="handCardCode" jdbcType="VARCHAR" />
+    <result column="PoolCount" property="poolCount" jdbcType="INTEGER" />
+    <result column="UpdateDT" property="updateDT" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    PositionID, PlayerID, ClubID, BindType, PositionName, HandCardCode,PoolCount,UpdateDT
+  </sql>
+  <select id="findCardsPositionList" resultMap="BaseResultMap" >
+    select a.ClubID,a.BindType,a.PlayerID,a.HandCardCode,a.PositionName,count(distinct(b.GameID)) poolCount 
+  	from v_player_hand a,v_game_action b
+	where a.GameID=b.GameID 
+	and a.PlayerID = b.PlayerID 
+	and b.GameStage = 'preflop' 
+	and (b.ActionType='active' and b.GameAction!='fold')
+	group by a.PlayerID,a.ClubID,a.BindType,a.HandCardCode,a.PositionName
+  </select>
+  <delete id="deleteHandCardsPosition">
+    delete from slt_handcards_position
+  </delete>
+   <insert id="insertCardsPositionList">
+		insert into slt_handcards_position ( PositionID, PlayerID, ClubID, BindType, PositionName, HandCardCode,PoolCount,UpdateDT)
+		values
+		<foreach collection="list" item="HandCardsPosition" index="index"
+			separator=",">
+			(#{HandCardsPosition.positionID,jdbcType=VARCHAR},
+			#{HandCardsPosition.playerID,jdbcType=VARCHAR},
+			#{HandCardsPosition.clubID,jdbcType=VARCHAR},
+			#{HandCardsPosition.bindType,jdbcType=INTEGER}, 
+			#{HandCardsPosition.positionName,jdbcType=VARCHAR},
+			#{HandCardsPosition.handCardCode,jdbcType=VARCHAR},
+			#{HandCardsPosition.poolCount,jdbcType=INTEGER},
+			#{HandCardsPosition.updateDT,jdbcType=VARCHAR})
+		</foreach>
+	</insert>
+</mapper>
