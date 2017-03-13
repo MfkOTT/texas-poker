@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd ">
+
+	<context:component-scan base-package="com.slt" />
+
+	<!-- 系统级异常的重新处理，拦截Exception把异常输出 -->
+	<bean id="exceptionResolver"
+		class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver">
+		<!-- 定义默认的异常处理页面 -->
+		<property name="defaultErrorView" value="/error/500"></property>
+		<!-- 定义异常处理页面用来获取异常信息的变量名，默认名为exception -->
+		<!-- property name="exceptionAttribute" value="ex"></property -->
+
+		<!-- 默认的状态码 -->
+		<property name="defaultStatusCode" value="500"></property>
+		<property name="statusCodes">
+			<props>
+				<prop key="/error/sysException">503</prop>
+			</props>
+		</property>
+		<!-- 定义系统异常 -->
+		<property name="exceptionMappings">
+			<props>
+				<prop key="com.slt.base.exception.SysException">/error/sysException</prop>
+			</props>
+		</property>
+		<!-- 设置日志输出级别 -->
+		<property name="warnLogCategory" value="ERROR" />
+	</bean>
+
+</beans>

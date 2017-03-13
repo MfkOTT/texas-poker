@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.slt.poker.dao.TeblePositionMapper" >
+  <resultMap id="BaseResultMap" type="com.slt.poker.dto.TeblePosition" >
+    <id column="PositionCode" property="positionCode" jdbcType="VARCHAR" />
+    <result column="PlayerCount" property="playerCount" jdbcType="INTEGER" />
+    <result column="PositionIndex" property="positionIndex" jdbcType="INTEGER" />
+    <result column="PositionName" property="positionName" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    PositionCode, PlayerCount, PositionIndex, PositionName
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from slt_table_position
+    where PositionCode = #{positionCode,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from slt_table_position
+    where PositionCode = #{positionCode,jdbcType=VARCHAR}
+  </delete>
+  <insert id="insert" parameterType="com.slt.poker.dto.TeblePosition" >
+    insert into slt_table_position (PositionCode, PlayerCount, PositionIndex, 
+      PositionName)
+    values (#{positionCode,jdbcType=VARCHAR}, #{playerCount,jdbcType=INTEGER}, #{positionIndex,jdbcType=INTEGER}, 
+      #{positionName,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.slt.poker.dto.TeblePosition" >
+    insert into slt_table_position
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="positionCode != null" >
+        PositionCode,
+      </if>
+      <if test="playerCount != null" >
+        PlayerCount,
+      </if>
+      <if test="positionIndex != null" >
+        PositionIndex,
+      </if>
+      <if test="positionName != null" >
+        PositionName,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="positionCode != null" >
+        #{positionCode,jdbcType=VARCHAR},
+      </if>
+      <if test="playerCount != null" >
+        #{playerCount,jdbcType=INTEGER},
+      </if>
+      <if test="positionIndex != null" >
+        #{positionIndex,jdbcType=INTEGER},
+      </if>
+      <if test="positionName != null" >
+        #{positionName,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.slt.poker.dto.TeblePosition" >
+    update slt_table_position
+    <set >
+      <if test="playerCount != null" >
+        PlayerCount = #{playerCount,jdbcType=INTEGER},
+      </if>
+      <if test="positionIndex != null" >
+        PositionIndex = #{positionIndex,jdbcType=INTEGER},
+      </if>
+      <if test="positionName != null" >
+        PositionName = #{positionName,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where PositionCode = #{positionCode,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.slt.poker.dto.TeblePosition" >
+    update slt_table_position
+    set PlayerCount = #{playerCount,jdbcType=INTEGER},
+      PositionIndex = #{positionIndex,jdbcType=INTEGER},
+      PositionName = #{positionName,jdbcType=VARCHAR}
+    where PositionCode = #{positionCode,jdbcType=VARCHAR}
+  </update>
+</mapper>

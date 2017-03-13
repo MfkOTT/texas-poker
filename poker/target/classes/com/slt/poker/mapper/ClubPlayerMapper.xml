@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.slt.poker.dao.ClubPlayerMapper" >
+  <resultMap id="BaseResultMap" type="com.slt.poker.dto.ClubPlayerKey" >
+    <id column="ClubID" property="clubID" jdbcType="VARCHAR" />
+    <id column="PLAYERID" property="PLAYERID" jdbcType="VARCHAR" />
+  </resultMap>
+  <delete id="deleteByPrimaryKey" parameterType="com.slt.poker.dto.ClubPlayerKey" >
+    delete from slt_club_player
+    where ClubID = #{clubID,jdbcType=VARCHAR}
+      and PLAYERID = #{PLAYERID,jdbcType=VARCHAR}
+  </delete>
+  <insert id="insert" parameterType="com.slt.poker.dto.ClubPlayerKey" >
+    insert into slt_club_player (ClubID, PLAYERID)
+    values (#{clubID,jdbcType=VARCHAR}, #{PLAYERID,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.slt.poker.dto.ClubPlayerKey" >
+    insert into slt_club_player
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="clubID != null" >
+        ClubID,
+      </if>
+      <if test="PLAYERID != null" >
+        PLAYERID,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="clubID != null" >
+        #{clubID,jdbcType=VARCHAR},
+      </if>
+      <if test="PLAYERID != null" >
+        #{PLAYERID,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+</mapper>

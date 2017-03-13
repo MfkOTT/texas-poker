@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.slt.poker.dao.PokerPartyMapper" >
+  <resultMap id="BaseResultMap" type="com.slt.poker.dto.PokerParty" >
+    <id column="PartyID" property="partyID" jdbcType="VARCHAR" />
+    <result column="PartyName" property="partyName" jdbcType="VARCHAR" />
+    <result column="ClubID" property="clubID" jdbcType="VARCHAR" />
+    <result column="BindType" property="bindType" jdbcType="VARCHAR" />
+    <result column="AnteType" property="anteType" jdbcType="VARCHAR" />
+    <result column="TableType" property="tableType" jdbcType="VARCHAR" />
+    <result column="StartDT" property="startDT" jdbcType="VARCHAR" />
+    <result column="EndDT" property="endDT" jdbcType="VARCHAR" />
+    <result column="PartyLong" property="partyLong" jdbcType="VARCHAR" />
+    <result column="CreateDT" property="createDT" jdbcType="VARCHAR" />
+    <result column="GameTimes" property="gameTimes" jdbcType="INTEGER" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    PartyID, PartyName, ClubID, BindType, AnteType, TableType, StartDT, EndDT, PartyLong, 
+    CreateDT, GameTimes
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from slt_poker_party
+    where PartyID = #{partyID,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from slt_poker_party
+    where PartyID = #{partyID,jdbcType=VARCHAR}
+  </delete>
+  <insert id="insert" parameterType="com.slt.poker.dto.PokerParty" >
+    insert into slt_poker_party (PartyID, PartyName, ClubID, 
+      BindType, AnteType, TableType, 
+      StartDT, EndDT, PartyLong, 
+      CreateDT, GameTimes)
+    values (#{partyID,jdbcType=VARCHAR}, #{partyName,jdbcType=VARCHAR}, #{clubID,jdbcType=VARCHAR}, 
+      #{bindType,jdbcType=VARCHAR}, #{anteType,jdbcType=VARCHAR}, #{tableType,jdbcType=VARCHAR}, 
+      #{startDT,jdbcType=VARCHAR}, #{endDT,jdbcType=VARCHAR}, #{partyLong,jdbcType=VARCHAR}, 
+      #{createDT,jdbcType=VARCHAR}, #{gameTimes,jdbcType=INTEGER})
+  </insert>
+  <insert id="insertSelective" parameterType="com.slt.poker.dto.PokerParty" >
+    insert into slt_poker_party
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="partyID != null" >
+        PartyID,
+      </if>
+      <if test="partyName != null" >
+        PartyName,
+      </if>
+      <if test="clubID != null" >
+        ClubID,
+      </if>
+      <if test="bindType != null" >
+        BindType,
+      </if>
+      <if test="anteType != null" >
+        AnteType,
+      </if>
+      <if test="tableType != null" >
+        TableType,
+      </if>
+      <if test="startDT != null" >
+        StartDT,
+      </if>
+      <if test="endDT != null" >
+        EndDT,
+      </if>
+      <if test="partyLong != null" >
+        PartyLong,
+      </if>
+      <if test="createDT != null" >
+        CreateDT,
+      </if>
+      <if test="gameTimes != null" >
+        GameTimes,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="partyID != null" >
+        #{partyID,jdbcType=VARCHAR},
+      </if>
+      <if test="partyName != null" >
+        #{partyName,jdbcType=VARCHAR},
+      </if>
+      <if test="clubID != null" >
+        #{clubID,jdbcType=VARCHAR},
+      </if>
+      <if test="bindType != null" >
+        #{bindType,jdbcType=VARCHAR},
+      </if>
+      <if test="anteType != null" >
+        #{anteType,jdbcType=VARCHAR},
+      </if>
+      <if test="tableType != null" >
+        #{tableType,jdbcType=VARCHAR},
+      </if>
+      <if test="startDT != null" >
+        #{startDT,jdbcType=VARCHAR},
+      </if>
+      <if test="endDT != null" >
+        #{endDT,jdbcType=VARCHAR},
+      </if>
+      <if test="partyLong != null" >
+        #{partyLong,jdbcType=VARCHAR},
+      </if>
+      <if test="createDT != null" >
+        #{createDT,jdbcType=VARCHAR},
+      </if>
+      <if test="gameTimes != null" >
+        #{gameTimes,jdbcType=INTEGER},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.slt.poker.dto.PokerParty" >
+    update slt_poker_party
+    <set >
+      <if test="partyName != null" >
+        PartyName = #{partyName,jdbcType=VARCHAR},
+      </if>
+      <if test="clubID != null" >
+        ClubID = #{clubID,jdbcType=VARCHAR},
+      </if>
+      <if test="bindType != null" >
+        BindType = #{bindType,jdbcType=VARCHAR},
+      </if>
+      <if test="anteType != null" >
+        AnteType = #{anteType,jdbcType=VARCHAR},
+      </if>
+      <if test="tableType != null" >
+        TableType = #{tableType,jdbcType=VARCHAR},
+      </if>
+      <if test="startDT != null" >
+        StartDT = #{startDT,jdbcType=VARCHAR},
+      </if>
+      <if test="endDT != null" >
+        EndDT = #{endDT,jdbcType=VARCHAR},
+      </if>
+      <if test="partyLong != null" >
+        PartyLong = #{partyLong,jdbcType=VARCHAR},
+      </if>
+      <if test="createDT != null" >
+        CreateDT = #{createDT,jdbcType=VARCHAR},
+      </if>
+      <if test="gameTimes != null" >
+        GameTimes = #{gameTimes,jdbcType=INTEGER},
+      </if>
+    </set>
+    where PartyID = #{partyID,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.slt.poker.dto.PokerParty" >
+    update slt_poker_party
+    set PartyName = #{partyName,jdbcType=VARCHAR},
+      ClubID = #{clubID,jdbcType=VARCHAR},
+      BindType = #{bindType,jdbcType=VARCHAR},
+      AnteType = #{anteType,jdbcType=VARCHAR},
+      TableType = #{tableType,jdbcType=VARCHAR},
+      StartDT = #{startDT,jdbcType=VARCHAR},
+      EndDT = #{endDT,jdbcType=VARCHAR},
+      PartyLong = #{partyLong,jdbcType=VARCHAR},
+      CreateDT = #{createDT,jdbcType=VARCHAR},
+      GameTimes = #{gameTimes,jdbcType=INTEGER}
+    where PartyID = #{partyID,jdbcType=VARCHAR}
+  </update>
+</mapper>

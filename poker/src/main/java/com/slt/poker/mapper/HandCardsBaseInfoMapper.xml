@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.slt.poker.dao.HandCardsBaseInfoMapper" >
+  <resultMap id="BaseResultMap" type="com.slt.poker.dto.HandCardsBaseInfo" >
+    <id column="HandCardsCode" property="handCardsCode" jdbcType="VARCHAR" />
+    <result column="HandCards" property="handCards" jdbcType="VARCHAR" />
+    <result column="HandCardsAlias" property="handCardsAlias" jdbcType="VARCHAR" />
+    <result column="HandSuit" property="handSuit" jdbcType="VARCHAR" />
+    <result column="RowIndex" property="rowIndex" jdbcType="INTEGER" />
+    <result column="ColIndex" property="colIndex" jdbcType="INTEGER" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    HandCardsCode, HandCards, HandCardsAlias, HandSuit, RowIndex, ColIndex
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from slt_handcards_baseinfo
+    where HandCardsCode = #{handCardsCode,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from slt_handcards_baseinfo
+    where HandCardsCode = #{handCardsCode,jdbcType=VARCHAR}
+  </delete>
+  <insert id="insert" parameterType="com.slt.poker.dto.HandCardsBaseInfo" >
+    insert into slt_handcards_baseinfo (HandCardsCode, HandCards, HandCardsAlias, 
+      HandSuit, RowIndex, ColIndex
+      )
+    values (#{handCardsCode,jdbcType=VARCHAR}, #{handCards,jdbcType=VARCHAR}, #{handCardsAlias,jdbcType=VARCHAR}, 
+      #{handSuit,jdbcType=VARCHAR}, #{rowIndex,jdbcType=INTEGER}, #{colIndex,jdbcType=INTEGER}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.slt.poker.dto.HandCardsBaseInfo" >
+    insert into slt_handcards_baseinfo
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="handCardsCode != null" >
+        HandCardsCode,
+      </if>
+      <if test="handCards != null" >
+        HandCards,
+      </if>
+      <if test="handCardsAlias != null" >
+        HandCardsAlias,
+      </if>
+      <if test="handSuit != null" >
+        HandSuit,
+      </if>
+      <if test="rowIndex != null" >
+        RowIndex,
+      </if>
+      <if test="colIndex != null" >
+        ColIndex,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="handCardsCode != null" >
+        #{handCardsCode,jdbcType=VARCHAR},
+      </if>
+      <if test="handCards != null" >
+        #{handCards,jdbcType=VARCHAR},
+      </if>
+      <if test="handCardsAlias != null" >
+        #{handCardsAlias,jdbcType=VARCHAR},
+      </if>
+      <if test="handSuit != null" >
+        #{handSuit,jdbcType=VARCHAR},
+      </if>
+      <if test="rowIndex != null" >
+        #{rowIndex,jdbcType=INTEGER},
+      </if>
+      <if test="colIndex != null" >
+        #{colIndex,jdbcType=INTEGER},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.slt.poker.dto.HandCardsBaseInfo" >
+    update slt_handcards_baseinfo
+    <set >
+      <if test="handCards != null" >
+        HandCards = #{handCards,jdbcType=VARCHAR},
+      </if>
+      <if test="handCardsAlias != null" >
+        HandCardsAlias = #{handCardsAlias,jdbcType=VARCHAR},
+      </if>
+      <if test="handSuit != null" >
+        HandSuit = #{handSuit,jdbcType=VARCHAR},
+      </if>
+      <if test="rowIndex != null" >
+        RowIndex = #{rowIndex,jdbcType=INTEGER},
+      </if>
+      <if test="colIndex != null" >
+        ColIndex = #{colIndex,jdbcType=INTEGER},
+      </if>
+    </set>
+    where HandCardsCode = #{handCardsCode,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.slt.poker.dto.HandCardsBaseInfo" >
+    update slt_handcards_baseinfo
+    set HandCards = #{handCards,jdbcType=VARCHAR},
+      HandCardsAlias = #{handCardsAlias,jdbcType=VARCHAR},
+      HandSuit = #{handSuit,jdbcType=VARCHAR},
+      RowIndex = #{rowIndex,jdbcType=INTEGER},
+      ColIndex = #{colIndex,jdbcType=INTEGER}
+    where HandCardsCode = #{handCardsCode,jdbcType=VARCHAR}
+  </update>
+</mapper>

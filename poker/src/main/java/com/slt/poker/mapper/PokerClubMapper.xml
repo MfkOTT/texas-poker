@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.slt.poker.dao.PokerClubMapper" >
+  <resultMap id="BaseResultMap" type="com.slt.poker.dto.PokerClub" >
+    <id column="ClubID" property="clubID" jdbcType="VARCHAR" />
+    <result column="ClubName" property="clubName" jdbcType="VARCHAR" />
+    <result column="CreateDT" property="createDT" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    ClubID, ClubName, CreateDT
+  </sql>
+  <select id="findClub" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from slt_poker_club
+    where ClubID = #{clubID,jdbcType=VARCHAR}
+  </select>
+</mapper>

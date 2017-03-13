@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.slt.poker.dao.PlayerKpiMapper" >
+  <resultMap id="BaseResultMap" type="com.slt.poker.dto.PlayerKpi" >
+    <id column="PlayerKpiID" property="playerKpiID" jdbcType="VARCHAR" />
+    <result column="PlayerID" property="playerID" jdbcType="VARCHAR" />
+    <result column="ClubID" property="clubID" jdbcType="VARCHAR" />
+    <result column="BlindType" property="blindType" jdbcType="INTEGER" />
+    <result column="KpiCode" property="kpiCode" jdbcType="VARCHAR" />
+    <result column="KpiValue" property="kpiValue" jdbcType="VARCHAR" />
+    <result column="ClubKpiValue" property="clubKpiValue" jdbcType="VARCHAR" />
+    <result column="UpdateDT" property="updateDT" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    PlayerKpiID, PlayerID, ClubID, BlindType, KpiCode, KpiValue, ClubKpiValue, UpdateDT
+  </sql>
+  <select id="findPlayerKpiList" resultType="java.util.Map" >
+    select 
+    a.KpiCode,a.KpiName,a.GameStage,b.KpiValue,b.ClubKpiValue
+    from slt_kpi_baseinfo a, slt_player_kpi b
+    where b.ClubID = #{clubID,jdbcType=VARCHAR}
+    and b.BlindType = #{blindType,jdbcType=INTEGER}
+     and b.PlayerID = #{playerID,jdbcType=VARCHAR}
+     and a.KpiCode=b.KpiCode
+  </select>
+    <select id="findSelfKpiList" resultType="java.util.Map" >
+    select 
+    a.KpiCode,a.KpiName,a.GameStage,b.KpiValue,b.ClubKpiValue
+    from slt_kpi_baseinfo a, slt_player_kpi b
+    where b.ClubID = #{clubID,jdbcType=VARCHAR}
+    and b.BlindType = #{blindType,jdbcType=INTEGER}
+     and b.PlayerID = #{playerID,jdbcType=VARCHAR}
+     and a.KpiType = "002"
+     and a.KpiCode=b.KpiCode
+  </select>
+
+</mapper>

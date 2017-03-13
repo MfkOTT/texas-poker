@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.taikang.exercise.dao.RoleDao">
+	<resultMap id="userResult" type="com.taikang.exercise.dto.Role">
+		<id property="id" column="id" />
+		<result property="name" column="name" />
+	</resultMap>
+
+	<sql id="base_column">id, name</sql>
+	<select id="findRoleById" parameterType="int" resultType="com.taikang.exercise.dto.Role">
+		select
+		<include refid="base_column" />
+		from wechat_role where id = #{id}
+	</select>
+	
+	<select id="findRole" parameterType="string" resultType="com.taikang.exercise.dto.Role">
+		select
+		<include refid="base_column" />
+		from wechat_role where name like '%'|| #{name} || '%'
+	</select>
+	
+	<update id="updateRole" parameterType="com.taikang.exercise.dto.Role">
+		update wechat_role
+		<set>
+			<if test="name != null">
+				name = #{name},
+			</if>
+		</set>
+		where id = #{id}
+	</update>
+	<insert id="insertRole" parameterType="role">
+		insert into wechat_role(id, name) values (#{id}, #{name})
+	</insert>
+	<delete id="deleteRole" parameterType="int">
+		delete from wechat_role where id = #{id}
+	</delete>
+</mapper>

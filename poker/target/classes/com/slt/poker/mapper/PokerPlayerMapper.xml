@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.slt.poker.dao.PokerPlayerMapper" >
+  <resultMap id="BaseResultMap" type="com.slt.poker.dto.PokerPlayer" >
+    <id column="PlayerID" property="playerID" jdbcType="VARCHAR" />
+    <result column="PlayerName" property="playerName" jdbcType="VARCHAR" />
+    <result column="CreateDT" property="createDT" jdbcType="VARCHAR" />
+    <result column="UpdateDT" property="updateDT" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    PlayerID, PlayerName, CreateDT, UpdateDT
+  </sql>
+  <select id="findPlayerList" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    a.PlayerID, a.PlayerName
+    from slt_poker_player a
+    where a.PlayerID in (select b.PlayerID from slt_club_player b where b.ClubID = #{clubID,jdbcType=VARCHAR})
+    <if test="playerName != null">
+    and a.PlayerName like CONCAT('%',#{playerName,jdbcType=VARCHAR},'%')
+    </if>
+  </select>
+   <select id="findPokerPlayer" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from slt_poker_player 
+    where PlayerID=#{playerID,jdbcType=VARCHAR}
+  </select>
+  
+</mapper>

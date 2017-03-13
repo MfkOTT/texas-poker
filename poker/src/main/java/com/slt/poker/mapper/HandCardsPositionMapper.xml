@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.slt.poker.dao.HandCardsPositionMapper" >
+  <resultMap id="BaseResultMap" type="com.slt.poker.dto.HandCardsPosition" >
+    <id column="PositionID" property="positionID" jdbcType="VARCHAR" />
+    <result column="PlayerID" property="playerID" jdbcType="VARCHAR" />
+    <result column="ClubID" property="clubID" jdbcType="VARCHAR" />
+    <result column="BindType" property="bindType" jdbcType="INTEGER" />
+    <result column="PositionName" property="positionName" jdbcType="VARCHAR" />
+    <result column="HandCardCode" property="handCardCode" jdbcType="VARCHAR" />
+    <result column="PoolCount" property="poolCount" jdbcType="INTEGER" />
+    <result column="UpdateDT" property="updateDT" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    PositionID, PlayerID, ClubID, BindType, PositionName, HandCardCode,PoolCount,UpdateDT
+  </sql>
+  <select id="findCardPositionListByName" resultType="java.util.Map" >
+    select 
+    <![CDATA[(@i := @i+1) AS PoolIndex,a.HandCardCode,a.PoolCount,b.HandSuit,b.RowIndex,b.ColIndex
+    from slt_handcards_position a,slt_handcards_baseinfo b,(select @i :=0) c]]>
+    where a.HandCardCode=b.HandCardCode
+    and a.PlayerID = #{playerID,jdbcType=VARCHAR}
+    and a.ClubID = #{clubID,jdbcType=VARCHAR}
+    and a.BindType = #{bindType,jdbcType=INTEGER}
+    and a.PositionName = #{positionName,jdbcType=VARCHAR}
+    order by a.PoolCount
+  </select>
+</mapper>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.slt.poker.dao.DeviceMapper" >
+  <resultMap id="BaseResultMap" type="com.slt.poker.dto.Device" >
+    <id column="DeviceID" property="deviceID" jdbcType="VARCHAR" />
+    <result column="LoginID" property="loginID" jdbcType="VARCHAR" />
+    <result column="Activity" property="activity" jdbcType="VARCHAR" />
+    <result column="CreateDT" property="createDT" jdbcType="VARCHAR" />
+    <result column="UpdateDT" property="updateDT" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    DeviceID, LoginID, Activity, CreateDT, UpdateDT
+  </sql>
+  <select id="findDevice" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from slt_device
+    where DeviceID = #{deviceID,jdbcType=VARCHAR}
+  </select>
+</mapper>

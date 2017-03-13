@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.slt.poker.dao.PlayerHandMapper" >
+  <resultMap id="BaseResultMap" type="com.slt.poker.dto.PlayerHand" >
+    <id column="GameID" property="gameID" jdbcType="VARCHAR" />
+    <id column="PlayerID" property="playerID" jdbcType="VARCHAR" />
+    <result column="HandCards" property="handCards" jdbcType="VARCHAR" />
+    <result column="HandColors" property="handColors" jdbcType="VARCHAR" />
+    <result column="CreateDT" property="createDT" jdbcType="VARCHAR" />
+    <result column="HandSuit" property="handSuit" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    GameID, PlayerID, HandCards, HandColors, CreateDT, HandSuit
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="com.slt.poker.dto.PlayerHandKey" >
+    select 
+    <include refid="Base_Column_List" />
+    from slt_player_hand
+    where GameID = #{gameID,jdbcType=VARCHAR}
+      and PlayerID = #{playerID,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="com.slt.poker.dto.PlayerHandKey" >
+    delete from slt_player_hand
+    where GameID = #{gameID,jdbcType=VARCHAR}
+      and PlayerID = #{playerID,jdbcType=VARCHAR}
+  </delete>
+  <insert id="insert" parameterType="com.slt.poker.dto.PlayerHand" >
+    insert into slt_player_hand (GameID, PlayerID, HandCards, 
+      HandColors, CreateDT, HandSuit
+      )
+    values (#{gameID,jdbcType=VARCHAR}, #{playerID,jdbcType=VARCHAR}, #{handCards,jdbcType=VARCHAR}, 
+      #{handColors,jdbcType=VARCHAR}, #{createDT,jdbcType=VARCHAR}, #{handSuit,jdbcType=VARCHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.slt.poker.dto.PlayerHand" >
+    insert into slt_player_hand
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="gameID != null" >
+        GameID,
+      </if>
+      <if test="playerID != null" >
+        PlayerID,
+      </if>
+      <if test="handCards != null" >
+        HandCards,
+      </if>
+      <if test="handColors != null" >
+        HandColors,
+      </if>
+      <if test="createDT != null" >
+        CreateDT,
+      </if>
+      <if test="handSuit != null" >
+        HandSuit,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="gameID != null" >
+        #{gameID,jdbcType=VARCHAR},
+      </if>
+      <if test="playerID != null" >
+        #{playerID,jdbcType=VARCHAR},
+      </if>
+      <if test="handCards != null" >
+        #{handCards,jdbcType=VARCHAR},
+      </if>
+      <if test="handColors != null" >
+        #{handColors,jdbcType=VARCHAR},
+      </if>
+      <if test="createDT != null" >
+        #{createDT,jdbcType=VARCHAR},
+      </if>
+      <if test="handSuit != null" >
+        #{handSuit,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.slt.poker.dto.PlayerHand" >
+    update slt_player_hand
+    <set >
+      <if test="handCards != null" >
+        HandCards = #{handCards,jdbcType=VARCHAR},
+      </if>
+      <if test="handColors != null" >
+        HandColors = #{handColors,jdbcType=VARCHAR},
+      </if>
+      <if test="createDT != null" >
+        CreateDT = #{createDT,jdbcType=VARCHAR},
+      </if>
+      <if test="handSuit != null" >
+        HandSuit = #{handSuit,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where GameID = #{gameID,jdbcType=VARCHAR}
+      and PlayerID = #{playerID,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.slt.poker.dto.PlayerHand" >
+    update slt_player_hand
+    set HandCards = #{handCards,jdbcType=VARCHAR},
+      HandColors = #{handColors,jdbcType=VARCHAR},
+      CreateDT = #{createDT,jdbcType=VARCHAR},
+      HandSuit = #{handSuit,jdbcType=VARCHAR}
+    where GameID = #{gameID,jdbcType=VARCHAR}
+      and PlayerID = #{playerID,jdbcType=VARCHAR}
+  </update>
+</mapper>

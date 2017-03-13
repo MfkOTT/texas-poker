@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.slt.poker.dao.PokerGameMapper" >
+  <resultMap id="BaseResultMap" type="com.slt.poker.dto.PokerGame" >
+    <id column="GameID" property="gameID" jdbcType="VARCHAR" />
+    <result column="PartyID" property="partyID" jdbcType="VARCHAR" />
+    <result column="PlayerCount" property="playerCount" jdbcType="INTEGER" />
+    <result column="GameIndex" property="gameIndex" jdbcType="INTEGER" />
+    <result column="EndStage" property="endStage" jdbcType="VARCHAR" />
+    <result column="ShowDown" property="showDown" jdbcType="VARCHAR" />
+    <result column="CreateDT" property="createDT" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    GameID, PartyID, PlayerCount, GameIndex, EndStage, ShowDown, CreateDT
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from slt_poker_game
+    where GameID = #{gameID,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from slt_poker_game
+    where GameID = #{gameID,jdbcType=VARCHAR}
+  </delete>
+  <insert id="insert" parameterType="com.slt.poker.dto.PokerGame" >
+    insert into slt_poker_game (GameID, PartyID, PlayerCount, 
+      GameIndex, EndStage, ShowDown, 
+      CreateDT)
+    values (#{gameID,jdbcType=VARCHAR}, #{partyID,jdbcType=VARCHAR}, #{playerCount,jdbcType=INTEGER}, 
+      #{gameIndex,jdbcType=INTEGER}, #{endStage,jdbcType=VARCHAR}, #{showDown,jdbcType=VARCHAR}, 
+      #{createDT,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.slt.poker.dto.PokerGame" >
+    insert into slt_poker_game
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="gameID != null" >
+        GameID,
+      </if>
+      <if test="partyID != null" >
+        PartyID,
+      </if>
+      <if test="playerCount != null" >
+        PlayerCount,
+      </if>
+      <if test="gameIndex != null" >
+        GameIndex,
+      </if>
+      <if test="endStage != null" >
+        EndStage,
+      </if>
+      <if test="showDown != null" >
+        ShowDown,
+      </if>
+      <if test="createDT != null" >
+        CreateDT,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="gameID != null" >
+        #{gameID,jdbcType=VARCHAR},
+      </if>
+      <if test="partyID != null" >
+        #{partyID,jdbcType=VARCHAR},
+      </if>
+      <if test="playerCount != null" >
+        #{playerCount,jdbcType=INTEGER},
+      </if>
+      <if test="gameIndex != null" >
+        #{gameIndex,jdbcType=INTEGER},
+      </if>
+      <if test="endStage != null" >
+        #{endStage,jdbcType=VARCHAR},
+      </if>
+      <if test="showDown != null" >
+        #{showDown,jdbcType=VARCHAR},
+      </if>
+      <if test="createDT != null" >
+        #{createDT,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.slt.poker.dto.PokerGame" >
+    update slt_poker_game
+    <set >
+      <if test="partyID != null" >
+        PartyID = #{partyID,jdbcType=VARCHAR},
+      </if>
+      <if test="playerCount != null" >
+        PlayerCount = #{playerCount,jdbcType=INTEGER},
+      </if>
+      <if test="gameIndex != null" >
+        GameIndex = #{gameIndex,jdbcType=INTEGER},
+      </if>
+      <if test="endStage != null" >
+        EndStage = #{endStage,jdbcType=VARCHAR},
+      </if>
+      <if test="showDown != null" >
+        ShowDown = #{showDown,jdbcType=VARCHAR},
+      </if>
+      <if test="createDT != null" >
+        CreateDT = #{createDT,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where GameID = #{gameID,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.slt.poker.dto.PokerGame" >
+    update slt_poker_game
+    set PartyID = #{partyID,jdbcType=VARCHAR},
+      PlayerCount = #{playerCount,jdbcType=INTEGER},
+      GameIndex = #{gameIndex,jdbcType=INTEGER},
+      EndStage = #{endStage,jdbcType=VARCHAR},
+      ShowDown = #{showDown,jdbcType=VARCHAR},
+      CreateDT = #{createDT,jdbcType=VARCHAR}
+    where GameID = #{gameID,jdbcType=VARCHAR}
+  </update>
+</mapper>

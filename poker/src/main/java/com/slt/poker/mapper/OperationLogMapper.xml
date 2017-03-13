@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.slt.poker.dao.OperationLogMapper" >
+  <resultMap id="BaseResultMap" type="com.slt.poker.dto.OperationLog" >
+    <id column="LogID" property="logID" jdbcType="VARCHAR" />
+    <result column="LoginID" property="loginID" jdbcType="VARCHAR" />
+    <result column="DeviceID" property="deviceID" jdbcType="VARCHAR" />
+    <result column="Module" property="module" jdbcType="VARCHAR" />
+    <result column="CreateDT" property="createDT" jdbcType="VARCHAR" />
+  </resultMap>
+  <resultMap id="ResultMapWithBLOBs" type="com.slt.poker.dto.OperationLog" extends="BaseResultMap" >
+    <result column="OpDecription" property="opDecription" jdbcType="LONGVARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    LogID, LoginID, Module, CreateDT
+  </sql>
+  <insert id="insertLog" parameterType="com.slt.poker.dto.OperationLog" >
+    insert into slt_operation_log (LogID, LoginID,DeviceID, Module, 
+      CreateDT, OpDecription)
+    values (#{logID,jdbcType=VARCHAR}, #{loginID,jdbcType=VARCHAR}, #{deviceID,jdbcType=VARCHAR}, #{module,jdbcType=VARCHAR}, 
+      #{createDT,jdbcType=VARCHAR}, #{opDecription,jdbcType=LONGVARCHAR})
+  </insert>
+
+</mapper>

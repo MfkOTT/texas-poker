@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.slt.poker.dao.UserTokenMapper" >
+  <resultMap id="BaseResultMap" type="com.slt.poker.dto.UserToken" >
+    <id column="LoginID" property="loginID" jdbcType="VARCHAR" />
+    <result column="DeviceID" property="deviceID" jdbcType="VARCHAR" />
+    <result column="UserToken" property="userToken" jdbcType="VARCHAR" />
+    <result column="CreateDT" property="createDT" jdbcType="VARCHAR" />
+    <result column="UpdateDT" property="updateDT" jdbcType="VARCHAR" />
+    <result column="ExpireDT" property="expireDT" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    LoginID, DeviceID, UserToken, CreateDT, UpdateDT, ExpireDT
+  </sql>
+  <select id="findToken" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from slt_user_token
+    where LoginID = #{loginID,jdbcType=VARCHAR}
+  </select>
+   <select id="findByTokenAndDeviceId" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from slt_user_token
+    where UserToken = #{userToken,jdbcType=VARCHAR}
+    and DeviceID = #{deviceID,jdbcType=VARCHAR}
+  </select>
+  
+  <insert id="insertToken" parameterType="com.slt.poker.dto.UserToken" >
+    insert into slt_user_token (LoginID, DeviceID, UserToken, 
+      CreateDT, UpdateDT, ExpireDT
+      )
+    values (#{loginID,jdbcType=VARCHAR}, #{deviceID,jdbcType=VARCHAR}, #{userToken,jdbcType=VARCHAR}, 
+      #{createDT,jdbcType=VARCHAR}, #{updateDT,jdbcType=VARCHAR}, #{expireDT,jdbcType=VARCHAR}
+      )
+  </insert>
+  <update id="updateToken" parameterType="com.slt.poker.dto.UserToken" >
+    update slt_user_token
+    set DeviceID = #{deviceID,jdbcType=VARCHAR},
+      UserToken = #{userToken,jdbcType=VARCHAR},
+      UpdateDT = #{updateDT,jdbcType=VARCHAR},
+      ExpireDT = #{expireDT,jdbcType=VARCHAR}
+    where LoginID = #{loginID,jdbcType=VARCHAR}
+  </update>
+</mapper>

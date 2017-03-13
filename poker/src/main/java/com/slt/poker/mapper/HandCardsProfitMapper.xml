@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.slt.poker.dao.HandCardsProfitMapper" >
+  <resultMap id="BaseResultMap" type="com.slt.poker.dto.HandCardsProfit" >
+    <id column="ProfitID" property="profitID" jdbcType="VARCHAR" />
+    <result column="PlayerID" property="playerID" jdbcType="VARCHAR" />
+    <result column="ClubID" property="clubID" jdbcType="VARCHAR" />
+    <result column="BindType" property="bindType" jdbcType="INTEGER" />
+    <result column="HandCardCode" property="handCardCode" jdbcType="VARCHAR" />
+    <result column="GameCount" property="gameCount" jdbcType="INTEGER" />
+    <result column="ProfitCount" property="profitCount" jdbcType="INTEGER" />
+    <result column="OnceMaxWin" property="onceMaxWin" jdbcType="VARCHAR" />
+    <result column="OnceMaxLose" property="onceMaxLose" jdbcType="VARCHAR" />
+    <result column="Profit" property="profit" jdbcType="VARCHAR" />
+    <result column="UpdateDT" property="updateDT" jdbcType="VARCHAR" />
+  </resultMap>
+  
+  <sql id="Base_Column_List" >
+    ProfitID, PlayerID, ClubID, BindType, HandCardCode, GameCount, ProfitCount, OnceMaxWin, 
+    OnceMaxLose, Profit, UpdateDT
+  </sql>
+	<select id="findCardList" resultType="java.util.Map">
+		select a.HandCardCode,a.HandSuit,a.RowIndex,a.ColIndex,
+		b.GameCount,b.ProfitCount,b.Profit
+		FROM slt_handcards_baseinfo a,slt_handcards_profit b
+		where a.HandCardCode=b.HandCardCode
+		and b.PlayerID=#{playerID,jdbcType=VARCHAR}
+		and b.ClubID=#{clubID,jdbcType=VARCHAR}
+		and b.BindType=#{bindType,jdbcType=INTEGER}
+	</select>
+
+</mapper>
